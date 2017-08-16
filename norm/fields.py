@@ -1,0 +1,594 @@
+from fleety.auth.hashing import make_password
+from fleety.http.errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError
+from fleety.db.orm.errors import DeleteRestrictedError
+from fleety.db.orm import datamodel
+from fleety.auth.hashing import is_hashed
+from importlib import import_module
+import re
+import datetime
+
+
+class Field:
+    ''' Defines a field of a model. Represents how to store this specific
+    datatype in the redis database '''
+
+    def __init__(self, *, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, fillable=True):
+        # This field's value is mapped to the ID in a redis hash so you can Model.get_by(field, value)
+        self.index     = index     
+
+        # This field is required in validation
+        self.required  = required  
+
+        # This field's default value
+        self.default   = default   
+
+        # This field's value is not published in the JSON representation of the object
+        self.private   = private   
+
+        # A regular expresion that validates this field's value
+        self.regex     = regex     
+
+        # A set of forbidden values for this field
+        self.forbidden = forbidden 
+
+        # This field can't be set via http
+        self.fillable  = fillable  
+
+        # This will be set later by the proxy
+        self.name      = name
+        self.obj       = None
+
+    def get_redis(self, pipeline=None):
+        if pipeline:
+            return pipeline
+
+        from fleety import redis
+
+        return redis
+
+    def value_or_default(self, value):
+        ''' Returns the given value or the specified default value for this
+        field '''
+        if value is None:
+            if callable(self.default):
+                return self.default()
+            else:
+                return self.default
+
+        return value
+
+    def validate_required(self, value):
+        ''' Validates the given value agains this field's 'required' property
+        '''
+        if self.required and (value is None or value==''):
+            raise MissingFieldError([self.name])
+
+    def init(self, value):
+        ''' Returns the value that will be set in the model when it is passed
+        as an __init__ attribute '''
+        return self.value_or_default(value)
+
+    def recover(self, data, redis=None):
+        ''' Retrieve this field's value from the database '''
+        value = data.get(self.name)
+
+        if value is None:
+            return None
+
+        return str(value)
+
+    def prepare(self, value):
+        ''' Prepare this field's value to insert in database '''
+        if value is None: return None
+
+        return str(value)
+
+    def to_json(self, value):
+        ''' Format the value to be presented in json format '''
+        return value
+
+    def save(self, value, redis, *, commit=True):
+        ''' Sets this fields value in the databse '''
+        value = self.prepare(value)
+
+        if value is not None:
+            redis.hset(self.obj.key(), self.name, value)
+        else:
+            redis.hdel(self.obj.key(), self.name)
+
+        if self.index:
+            key = self.key()
+
+            if self.name in self.obj._old:
+                redis.hdel(key, self.obj._old[self.name])
+
+            redis.hset(key, value, self.obj.id)
+
+    def delete(self, redis):
+        ''' Deletes this field's value from the databse. Should be implemented
+        in special cases '''
+        if self.index:
+            redis.hdel(self.key(), getattr(self.obj, self.name))
+
+    def validate(self, value, redis=None):
+        '''
+        Validates data obtained from a request and returns it in the apropiate
+        format
+        '''
+        # cleanup
+        if type(value) == str:
+            value = value.strip()
+
+        value = self.value_or_default(value)
+
+        # validation
+        self.validate_required(value)
+
+        if self.regex and not re.match(self.regex, value, flags=re.ASCII):
+            raise InvalidFieldError([self.name])
+
+        if self.forbidden and value in self.forbidden:
+            raise ReservedFieldError([self.name])
+
+        if self.index:
+            key = self.key()
+
+            old = datamodel.debyte_string(redis.hget(key, value))
+            old_value = getattr(self.obj, self.name)
+
+            if old is not None and old != self.obj.id:
+                raise NotUniqueFieldError([self.name])
+            elif old_value != value:
+                self.obj._old[self.name] = old_value
+
+        return value
+
+    def key(self):
+        return self.obj.cls_key() + ':index_' + self.name
+
+
+class Text(Field):
+    pass
+
+
+class Hash(Text):
+    ''' A value that should be stored as a hash, for example a password '''
+
+    def init(self, value):
+        ''' hash passwords given in the constructor '''
+        value = self.value_or_default(value)
+
+        if value is None: return None
+
+        if is_hashed(value):
+            return value
+
+        return make_password(value)
+
+    def prepare(self, value):
+        ''' Prepare this field's value to insert in database '''
+        if value is None:
+            return None
+
+        if is_hashed(value):
+            return value
+
+        return make_password(value)
+
+    def validate(self, value, redis=None):
+        ''' hash passwords given via http '''
+        value = super().validate(value, redis)
+
+        if is_hashed(value):
+            return value
+
+        return make_password(value)
+
+
+class Bool(Field):
+    ''' A boolean value '''
+
+    def validate(self, value, redis=None):
+        value = self.value_or_default(value)
+
+        if value is None: return None
+
+        if type(value) == bool:
+            return value
+
+        return value == 'true' or value == '1'
+
+    def prepare(self, value):
+        return str(value)
+
+    def recover(self, data, redis=None):
+        value = data.get(self.name)
+
+        if value is None:
+            return None
+
+        return value in ['True', 'true', '1', 1]
+
+
+class Integer(Field):
+    ''' An integer value '''
+
+    def validate(self, value, redis=None):
+        value = self.value_or_default(value)
+
+        self.validate_required(value)
+
+        try:
+            return int(value)
+        except ValueError:
+            raise InvalidFieldError('Invalid number')
+
+    def recover(self, data, redis=None):
+        value = data.get(self.name)
+
+        if value == '' or value is None:
+            return None
+
+        return int(value)
+
+    def prepare(self, value):
+        return str(value)
+
+
+class Float(Field):
+
+    def validate(self, value, redis=None):
+        value = self.value_or_default(value)
+
+        self.validate_required(value)
+
+        try:
+            return float(value)
+        except ValueError:
+            raise InvalidFieldError('Invalid number')
+
+    def recover(self, data, redis=None):
+        value = data.get(self.name)
+
+        if value == '' or value is None:
+            return None
+
+        return float(value)
+
+    def prepare(self, value):
+        return str(value)
+
+
+class Datetime(Field):
+    ''' A datetime that can be used transparently as such in the model '''
+
+    def recover(self, data, redis=None):
+        value = data.get(self.name)
+
+        if not value:
+            return None
+
+        return datetime.datetime.utcfromtimestamp(int(value))
+
+    def prepare(self, value):
+        if value is None:
+            return None
+
+        return str(int(value.timestamp()))
+
+    def to_json(self, value):
+        if value is None:
+            return None
+
+        return value.isoformat() + 'Z'
+
+
+class Location(Field):
+    ''' A geolocation '''
+
+    def prepare(self, value):
+        return value
+
+    def save(self, value, redis, *, commit=True):
+        key = self.key()
+
+        if value is not None:
+            redis.geoadd(key, value.lon, value.lat, self.obj.id)
+        else:
+            redis.zrem(key, self.obj.id)
+
+    def delete(self, redis):
+        key = self.key()
+
+        redis.delete(key)
+
+    def to_json(self, value):
+        if value is None:
+            return None
+
+        return value.to_json()
+
+    def recover(self, data, redis):
+        key = self.key()
+
+        try: # TODO change this once the GEO api is stable in redis-py
+            value = redis.geopos(key, self.obj.id)
+        except TypeError:
+            value = None
+
+        if not value:
+            return None
+
+        if value[0] is None:
+            return None
+
+        return datamodel.Location(*value[0])
+
+    def key(self):
+        return self.obj.cls_key() + ':geo_' + self.name
+
+
+class Dict(Field):
+    ''' A dict that can be used transparently as such in the model '''
+
+    def prepare(self, value):
+        return value
+
+    def save(self, value, redis, *, commit=True):
+        key = self.key()
+
+        if bool(value) is not False:
+            redis.delete(key)
+            redis.hmset(key, value)
+        else:
+            redis.delete(key)
+
+    def delete(self, redis):
+        key = self.key()
+
+        redis.delete(key)
+
+    def to_json(self, value):
+        if value is None:
+            return dict()
+
+        return value
+
+    def recover(self, data, redis):
+        key = self.key()
+
+        try:
+            value = datamodel.debyte_hash(redis.hgetall(key))
+        except TypeError:
+            value = dict()
+
+        return value
+
+    def key(self):
+        return self.obj.key() + ':dict_' + self.name
+
+
+class Relation(Field):
+
+    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+        self.modelspec = model
+        self.private   = private
+        self.on_delete = on_delete
+        self.inverse   = inverse
+        self.fillable  = False
+
+    def model(self):
+        if type(self.modelspec) == str:
+            from fleety.db.orm import Model
+
+            pieces = self.modelspec.split('.')
+
+            return getattr(import_module('.'.join(pieces[:-1])), pieces[-1])
+
+        return self.modelspec
+
+
+class ForeignIdRelation(Relation):
+
+    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
+        self.default   = None
+
+    def relate(self, obj, pipeline):
+        pipeline.hset(self.obj.key(), self.name, obj.id)
+
+    def unrelate(self, obj, redis):
+        redis.hdel(self.obj.key(), self.name, obj.id)
+
+    def set(self, value, *, commit=True, pipeline=None):
+        pipeline = self.get_redis(pipeline)
+
+        getattr(self.obj.proxy, self.name).fill()
+        prev = getattr(self.obj, self.name)
+        if prev is not None:
+            getattr(prev.proxy, self.inverse).unrelate(self.obj, pipeline)
+
+        if value is None:
+            pipeline.hdel(self.obj.key(), self.name)
+            setattr(self.obj, self.name, None)
+            return
+
+        pipeline.hset(self.obj.key(), self.name, value.id)
+
+        related = value
+
+        if self.inverse:
+            getattr(related.proxy, self.inverse).relate(self.obj, pipeline)
+
+        setattr(self.obj, self.name, value)
+
+    def delete(self, pipeline):
+        getattr(self.obj.proxy, self.name).fill()
+        item = getattr(self.obj, self.name)
+
+        if item is None: return
+
+        if self.on_delete == 'restrict':
+            raise DeleteRestrictedError('attempt to delete with relations and restrict flag')
+
+        if self.on_delete == 'cascade':
+            item.delete()
+        elif self.inverse:
+            getattr(item.proxy, self.inverse).unrelate(self.obj, pipeline)
+
+    def fill(self):
+        redis = self.get_redis()
+
+        value = datamodel.debyte_string(redis.hget(self.obj.key(), self.name))
+
+        setattr(self.obj, self.name, self.model().get(value))
+
+
+class MultipleRelation(Relation):
+
+    def set(self, value, *, commit=True, pipeline=None):
+        key   = self.key()
+        redis = self.get_redis(pipeline)
+
+        redis.delete(key)
+
+        if type(value) != list or len(value) == 0:
+            setattr(self.obj, self.name, [])
+            return
+
+        self.relate_all(value, redis)
+
+        for related in value:
+            if self.inverse:
+                getattr(related.proxy, self.inverse).relate(self.obj, redis)
+
+        setattr(self.obj, self.name, value)
+
+    def add(self, value, *, commit=True, pipeline=None):
+        key   = self.key()
+        redis = self.get_redis(pipeline)
+
+        self.relate(value, redis)
+
+        if self.inverse:
+            getattr(value.proxy, self.inverse).relate(self.obj, redis)
+
+    def recover(self, data, redis=None):
+        ''' Don't read the database by default '''
+        return []
+
+    def prepare(self, value):
+        return value
+
+    def init(self,value):
+        proposed = self.value_or_default(value)
+
+        if not proposed:
+            return []
+        return proposed
+
+    def fill(self, **kwargs):
+        ''' Loads the relationships into this model. They are not loaded by
+        default '''
+        redis = self.get_redis()
+
+        related_ids = self.get_related_ids(redis, **kwargs)
+        related = list(map(lambda id : self.model().get(datamodel.debyte_string(id)), related_ids))
+
+        setattr(self.obj, self.name, related)
+
+    def delete(self, redis):
+        key = self.key()
+
+        getattr(self.obj.proxy, self.name).fill()
+        items = getattr(self.obj, self.name)
+
+        if self.on_delete == 'restrict' and len(items) > 0:
+            raise DeleteRestrictedError('attempt to delete with relations and restrict flag')
+
+        for item in items:
+            if self.on_delete == 'cascade':
+                item.delete()
+            elif self.inverse:
+                getattr(item.proxy, self.inverse).unrelate(self.obj, redis)
+
+        redis.delete(key)
+
+
+class SetRelation(MultipleRelation):
+    ''' A relationship with another model '''
+
+    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
+        self.default   = []
+        self.fillable  = False
+
+    def key(self):
+        return self.obj.key() + ':srel_' + self.name
+
+    def relate(self, obj, redis):
+        redis.sadd(self.key(), obj.id)
+
+    def relate_all(self, value, redis):
+        redis.sadd(self.key(), *[r.id for r in value])
+
+    def unrelate(self, obj, redis):
+        redis.srem(self.key(), obj.id)
+
+    def get_related_ids(self, redis):
+        key = self.key()
+
+        return redis.smembers(key)
+
+    def __contains__(self, item):
+        if not isinstance(item, self.model()):
+            return False
+
+        redis = self.get_redis()
+
+        return redis.sismember(self.key(), item.id)
+
+
+class SortedSetRelation(MultipleRelation):
+    ''' A relationship with another model that ensures the same ordering every
+    time '''
+
+    def __init__(self, model, sort_key, **kwargs):
+        super().__init__(model, **kwargs)
+        self.sort_key = sort_key
+        self.default   = []
+        self.fillable  = False
+
+    def key(self):
+        return self.obj.key() + ':zrel_' + self.name
+
+    def relate(self, obj, redis):
+        field = getattr(self.model(), self.sort_key) # the field in the foreign model
+
+        redis.zadd(self.key(), field.prepare(getattr(obj, self.sort_key)), obj.id)
+
+    def relate_all(self, value, redis):
+        field = getattr(self.model(), self.sort_key) # the field in the foreign model
+
+        p = lambda v: int(field.prepare(getattr(v, self.sort_key)))
+
+        redis.zadd(self.key(), *sum(([p(r), r.id] for r in value), []))
+
+    def unrelate(self, obj, redis):
+        redis.zrem(self.key(), obj.id)
+
+    def get_related_ids(self, redis, *, score=None):
+        key = self.key()
+
+        if score:
+            return redis.zrangebyscore(key, *score)
+
+        return redis.zrange(key, 0, -1)
+
+    def __contains__(self, item):
+        if not isinstance(item, self.model()):
+            return False
+
+        redis = self.get_redis()
+
+        return redis.zscore(self.key(), item.id) is not None
