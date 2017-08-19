@@ -1,7 +1,6 @@
-from fleety import redis
-from fleety.db.orm.lua import drop
-from fleety.db.orm import Model, fields
-from fleety.db.orm.auth import PermissionHolder
+from .lua import drop
+from . import Model, fields
+from .auth import PermissionHolder
 import unittest
 
 

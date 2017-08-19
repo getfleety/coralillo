@@ -1,7 +1,4 @@
-from fleety import redis, app
-from fleety.db.models.bounded import Position, Device, Fleet
-from fleety.db.models import User, Organization
-from fleety.db.orm.lua import drop
+from .lua import drop
 import unittest
 
 

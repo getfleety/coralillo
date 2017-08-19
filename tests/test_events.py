@@ -1,8 +1,5 @@
 import unittest
-import fleety
-from fleety.db.orm.lua import drop
-from fleety import redis
-from fleety.db.models.bounded import Geofence
+from .lua import drop
 import json
 
 
@@ -11,7 +8,6 @@ class EventTestCase(unittest.TestCase):
     def setUp(self):
         drop(args=['*'])
         self.maxDiff = None
-        self.app = fleety.app
         self.app.config['ORGANIZATION'] = 'testing'
 
     def test_create_sends_message(self):

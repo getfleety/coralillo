@@ -1,7 +1,5 @@
-from fleety.db.orm import Model
-from fleety.db.orm.lua import allow as allow_script, is_allowed as is_allowed_script
-from fleety.db.orm.datamodel import debyte_set
-from fleety import redis
+from norm.datamodel import debyte_set
+
 from inspect import isclass
 import re
 

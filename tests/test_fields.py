@@ -1,9 +1,7 @@
-from fleety import redis, app
-from fleety.db.orm.fields import *
-from fleety.db.orm import datamodel, Model
-from fleety.db.orm.lua import drop
-from fleety.db.models import User
-from fleety.auth.hashing import check_password
+from .fields import *
+from . import datamodel, Model
+from .lua import drop
+from .auth.hashing import check_password
 from datetime import datetime
 import unittest
 

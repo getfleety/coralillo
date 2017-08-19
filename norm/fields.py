@@ -1,8 +1,6 @@
-from fleety.auth.hashing import make_password
-from fleety.http.errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError
-from fleety.db.orm.errors import DeleteRestrictedError
-from fleety.db.orm import datamodel
-from fleety.auth.hashing import is_hashed
+from .hashing import make_password, is_hashed
+from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
+from . import datamodel
 from importlib import import_module
 import re
 import datetime
@@ -41,8 +39,6 @@ class Field:
     def get_redis(self, pipeline=None):
         if pipeline:
             return pipeline
-
-        from fleety import redis
 
         return redis
 
@@ -379,7 +375,7 @@ class Relation(Field):
 
     def model(self):
         if type(self.modelspec) == str:
-            from fleety.db.orm import Model
+            from . import Model
 
             pieces = self.modelspec.split('.')
 
