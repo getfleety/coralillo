@@ -5,6 +5,7 @@ from norm.datamodel import debyte_hash, debyte_string
 from norm.errors import ValidationErrors
 from norm.utils import to_pipeline
 from itertools import starmap
+import json
 
 
 class Proxy:
@@ -109,7 +110,7 @@ class Model(Form):
                 value
             )
 
-    def save(self, redis, *, commit=True):
+    def save(self, redis):
         ''' Persists this object to the database. Each field knows how to store
         itself so we don't have to worry about it '''
         pipe = to_pipeline(redis)
@@ -118,12 +119,11 @@ class Model(Form):
 
         for fieldname, field in self.proxy:
             if not isinstance(field, Relation):
-                field.save(getattr(self, fieldname), pipe, commit=commit)
+                field.save(getattr(self, fieldname), pipe, commit=False)
 
         pipe.sadd(type(self).members_key(), self.id)
 
-        if commit:
-            pipe.execute()
+        pipe.execute()
 
         if self.notify:
             redis.publish(type(self).cls_key(), json.dumps({

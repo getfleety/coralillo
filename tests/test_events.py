@@ -1,20 +1,26 @@
 import unittest
-from .lua import drop
+from norm import create_engine, Model, fields
 import json
+
+nrm = create_engine()
+
+
+class Something(Model):
+    name = fields.Text()
+    notify = True
 
 
 class EventTestCase(unittest.TestCase):
 
     def setUp(self):
-        drop(args=['*'])
+        nrm.lua.drop(args=['*'])
         self.maxDiff = None
-        self.app.config['ORGANIZATION'] = 'testing'
 
     def test_create_sends_message(self):
-        p = redis.pubsub(ignore_subscribe_messages=True)
-        p.subscribe('testing:geofence')
+        p = nrm.redis.pubsub(ignore_subscribe_messages=True)
+        p.subscribe('something')
 
-        fence = Geofence(name='the fence', abbr='TFC').save()
+        fence = Something(name='the fence', abbr='TFC').save(nrm.redis)
 
         p.get_message() # Consume the subscribe message
         message = p.get_message()
@@ -28,12 +34,12 @@ class EventTestCase(unittest.TestCase):
         p.unsubscribe()
 
     def test_delete_sends_message(self):
-        fence = Geofence(name='the fence', abbr='TFC').save()
+        fence = Something(name='the fence', abbr='TFC').save(nrm.redis)
 
-        p = redis.pubsub(ignore_subscribe_messages=True)
-        p.subscribe('testing:geofence')
+        p = nrm.redis.pubsub(ignore_subscribe_messages=True)
+        p.subscribe('something')
 
-        fence.delete()
+        fence.delete(nrm.redis)
 
         p.get_message()
         message = p.get_message()
@@ -47,12 +53,12 @@ class EventTestCase(unittest.TestCase):
         p.unsubscribe()
 
     def test_update_sends_message(self):
-        fence = Geofence(name='the fence', abbr='TFC').save()
+        fence = Something(name='the fence', abbr='TFC').save(nrm.redis)
 
-        p = redis.pubsub(ignore_subscribe_messages=True)
-        p.subscribe('testing:geofence')
+        p = nrm.redis.pubsub(ignore_subscribe_messages=True)
+        p.subscribe('something')
 
-        fence.update(name='renamed fence')
+        fence.update(nrm.redis, name='renamed fence')
 
         p.get_message()
         message = p.get_message()
@@ -67,3 +73,7 @@ class EventTestCase(unittest.TestCase):
         self.assertEqual(data['data']['attributes']['name'], 'renamed fence')
 
         p.unsubscribe()
+
+
+if __name__ == '__main__':
+    unittest.main()
