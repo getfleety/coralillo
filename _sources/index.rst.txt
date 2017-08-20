@@ -6,9 +6,9 @@
 NORM
 ====
 
-**Not an Object Relational Mapper** or **NORM Object-Redis Mapper**
+**Not an Object-Relational Mapping** or **NORM Object-Redis Mapping**
 
-NORM is a tool intended to provide a convenient API over the Redis data structure store in a similar way that traditional ORM does.
+NORM is a tool intended to provide a convenient API over the Redis data structure store in a similar way that traditional ORMs do.
 
 Basic Usage
 -----------
