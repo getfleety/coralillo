@@ -11,14 +11,14 @@ class PermissionHolder:
         information '''
         return self.key() + ':allow'
 
-    def allow(self, objspec):
-        return allow_script(keys=[self.allow_key()], args=[objspec])
+    def allow(self, objspec, engine):
+        return engine.lua.allow(keys=[self.allow_key()], args=[objspec])
 
-    def is_allowed(self, objspec, tail=None):
-        return is_allowed_script(keys=[self.allow_key()], args=[objspec, tail])
+    def is_allowed(self, objspec, engine, *, tail=None):
+        return engine.lua.is_allowed(keys=[self.allow_key()], args=[objspec, tail])
 
-    def revoke(self, objspec):
-        redis.srem(self.allow_key(), objspec)
+    def revoke(self, objspec, engine):
+        engine.redis.srem(self.allow_key(), objspec)
 
-    def get_perms(self):
-        return debyte_set(redis.smembers(self.allow_key()))
+    def get_perms(self, engine):
+        return debyte_set(engine.redis.smembers(self.allow_key()))
