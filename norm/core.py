@@ -1,15 +1,10 @@
 from copy import copy
 from uuid import uuid1
-from norm.fields import Field, Relation
+from norm.fields import Field, Relation, MultipleRelation, ForeignIdRelation
 from norm.datamodel import debyte_hash, debyte_string
 from norm.errors import ValidationErrors
-from redis.client import BasePipeline
-
-def to_pipeline(redis):
-    if isinstance(redis, BasePipeline):
-        return redis
-
-    return redis.pipeline()
+from norm.utils import to_pipeline
+from itertools import starmap
 
 
 class Proxy:
@@ -331,23 +326,16 @@ class Model(Form):
 
         return self.id == other.id
 
-    def delete(self, redis, commit=True):
+    def delete(self, redis):
         ''' Deletes this model from the database, calling delete in each field
         to properly delete special cases '''
-        pipe = to_pipeline(redis)
-
         for fieldname, field in self.proxy:
-            field.delete(pipe)
+            field.delete(redis)
 
-        pipe.delete(self.key())
-        pipe.srem(type(self).members_key(), self.id)
-
-        if commit:
-            pipe.execute()
+        redis.delete(self.key())
+        redis.srem(type(self).members_key(), self.id)
 
         if self.notify:
-            # TODO reconsider pipelines in this methods or think how to trigger
-            # the event when the pipeline is executed
             redis.publish(type(self).cls_key(), json.dumps({
                 'event': 'delete',
                 'data': self.to_json(),

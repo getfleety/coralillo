@@ -1,7 +1,8 @@
 from .hashing import make_password, is_hashed
 from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
-from . import datamodel
+from .datamodel import debyte_string, Location, debyte_hash
 from importlib import import_module
+from .utils import to_pipeline
 import re
 import datetime
 
@@ -35,12 +36,6 @@ class Field:
         # This will be set later by the proxy
         self.name      = name
         self.obj       = None
-
-    def get_redis(self, pipeline=None):
-        if pipeline:
-            return pipeline
-
-        return redis
 
     def value_or_default(self, value):
         ''' Returns the given value or the specified default value for this
@@ -129,7 +124,7 @@ class Field:
         if self.index:
             key = self.key()
 
-            old = datamodel.debyte_string(redis.hget(key, value))
+            old = debyte_string(redis.hget(key, value))
             old_value = getattr(self.obj, self.name)
 
             if old is not None and old != self.obj.id:
@@ -318,7 +313,7 @@ class Location(Field):
         if value[0] is None:
             return None
 
-        return datamodel.Location(*value[0])
+        return Location(*value[0])
 
     def key(self):
         return self.obj.cls_key() + ':geo_' + self.name
@@ -354,7 +349,7 @@ class Dict(Field):
         key = self.key()
 
         try:
-            value = datamodel.debyte_hash(redis.hgetall(key))
+            value = debyte_hash(redis.hgetall(key))
         except TypeError:
             value = dict()
 
@@ -396,30 +391,30 @@ class ForeignIdRelation(Relation):
     def unrelate(self, obj, redis):
         redis.hdel(self.obj.key(), self.name, obj.id)
 
-    def set(self, value, *, commit=True, pipeline=None):
-        pipeline = self.get_redis(pipeline)
+    def set(self, value, redis, *, commit=True):
+        getattr(self.obj.proxy, self.name).fill(redis)
 
-        getattr(self.obj.proxy, self.name).fill()
         prev = getattr(self.obj, self.name)
+
         if prev is not None:
-            getattr(prev.proxy, self.inverse).unrelate(self.obj, pipeline)
+            getattr(prev.proxy, self.inverse).unrelate(self.obj, redis)
 
         if value is None:
-            pipeline.hdel(self.obj.key(), self.name)
+            redis.hdel(self.obj.key(), self.name)
             setattr(self.obj, self.name, None)
             return
 
-        pipeline.hset(self.obj.key(), self.name, value.id)
+        redis.hset(self.obj.key(), self.name, value.id)
 
         related = value
 
         if self.inverse:
-            getattr(related.proxy, self.inverse).relate(self.obj, pipeline)
+            getattr(related.proxy, self.inverse).relate(self.obj, redis)
 
         setattr(self.obj, self.name, value)
 
-    def delete(self, pipeline):
-        getattr(self.obj.proxy, self.name).fill()
+    def delete(self, redis):
+        getattr(self.obj.proxy, self.name).fill(redis)
         item = getattr(self.obj, self.name)
 
         if item is None: return
@@ -430,33 +425,37 @@ class ForeignIdRelation(Relation):
         if self.on_delete == 'cascade':
             item.delete()
         elif self.inverse:
-            getattr(item.proxy, self.inverse).unrelate(self.obj, pipeline)
+            getattr(item.proxy, self.inverse).unrelate(self.obj, redis)
 
-    def fill(self):
-        redis = self.get_redis()
+    def fill(self, redis):
+        value = debyte_string(redis.hget(self.obj.key(), self.name))
 
-        value = datamodel.debyte_string(redis.hget(self.obj.key(), self.name))
-
-        setattr(self.obj, self.name, self.model().get(value))
+        setattr(self.obj, self.name, self.model().get(value, redis))
 
 
 class MultipleRelation(Relation):
 
-    def set(self, value, *, commit=True, pipeline=None):
-        key   = self.key()
-        redis = self.get_redis(pipeline)
+    def relate_all(self, value, pipe):
+        raise NotImplementedError('must be implemented in subclass')
 
-        redis.delete(key)
+    def set(self, value, redis, *, commit=True):
+        key  = self.key()
+        pipe = to_pipeline(redis)
+
+        pipe.delete(key)
 
         if type(value) != list or len(value) == 0:
             setattr(self.obj, self.name, [])
             return
 
-        self.relate_all(value, redis)
+        self.relate_all(value, pipe)
 
         for related in value:
             if self.inverse:
-                getattr(related.proxy, self.inverse).relate(self.obj, redis)
+                getattr(related.proxy, self.inverse).relate(self.obj, pipe)
+
+        if commit:
+            pipe.execute()
 
         setattr(self.obj, self.name, value)
 
@@ -483,20 +482,20 @@ class MultipleRelation(Relation):
             return []
         return proposed
 
-    def fill(self, **kwargs):
+    def fill(self, redis, **kwargs):
         ''' Loads the relationships into this model. They are not loaded by
         default '''
-        redis = self.get_redis()
-
-        related_ids = self.get_related_ids(redis, **kwargs)
-        related = list(map(lambda id : self.model().get(datamodel.debyte_string(id)), related_ids))
+        related = list(map(
+            lambda id : self.model().get(debyte_string(id), redis),
+            self.get_related_ids(redis, **kwargs)
+        ))
 
         setattr(self.obj, self.name, related)
 
     def delete(self, redis):
         key = self.key()
 
-        getattr(self.obj.proxy, self.name).fill()
+        getattr(self.obj.proxy, self.name).fill(redis)
         items = getattr(self.obj, self.name)
 
         if self.on_delete == 'restrict' and len(items) > 0:
@@ -504,7 +503,7 @@ class MultipleRelation(Relation):
 
         for item in items:
             if self.on_delete == 'cascade':
-                item.delete()
+                item.delete(redis)
             elif self.inverse:
                 getattr(item.proxy, self.inverse).unrelate(self.obj, redis)
 
@@ -536,11 +535,9 @@ class SetRelation(MultipleRelation):
 
         return redis.smembers(key)
 
-    def __contains__(self, item):
+    def has(self, item, redis):
         if not isinstance(item, self.model()):
             return False
-
-        redis = self.get_redis()
 
         return redis.sismember(self.key(), item.id)
 
@@ -581,7 +578,7 @@ class SortedSetRelation(MultipleRelation):
 
         return redis.zrange(key, 0, -1)
 
-    def __contains__(self, item):
+    def has(self, item, redis):
         if not isinstance(item, self.model()):
             return False
 

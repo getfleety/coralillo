@@ -1,15 +1,25 @@
-from .fields import *
-from . import datamodel, Model
-from .lua import drop
-from .auth.hashing import check_password
+from norm import create_engine, Model
+from norm.fields import *
+from norm.hashing import check_password
 from datetime import datetime
 import unittest
+import time
+import os
+
+nrm = create_engine()
+
+os.environ['TZ'] = 'UTC'
+time.tzset()
+
+
+class User(Model):
+    password = Hash()
 
 
 class FieldTestCase(unittest.TestCase):
 
     def setUp(self):
-        drop(args=['*'])
+        nrm.lua.drop(args=['*'])
         self.pwd = 'bcrypt$$2b$12$gWQweaiLPJr2OHSPOshyQe3zmnSAPGv2pA.PwOIuxZ3ylvLMN7h6C'
 
     def test_field_text(self):
@@ -95,29 +105,25 @@ class FieldTestCase(unittest.TestCase):
         class MyModel(Model):
             field = Location()
 
-        obj = MyModel(field = datamodel.Location(-103.3590, 20.7240)).save()
+        obj = MyModel(field = datamodel.Location(-103.3590, 20.7240)).save(nrm.redis)
 
-        self.assertEqual(datamodel.debyte_string(redis.type('mymodel:geo_field')), 'zset')
-        self.assertEqual(MyModel.get(obj.id).field, datamodel.Location(-103.3590, 20.7240))
+        self.assertEqual(nrm.redis.type('mymodel:geo_field'), b'zset')
+        self.assertEqual(MyModel.get(obj.id, nrm.redis).field, datamodel.Location(-103.3590, 20.7240))
 
     def test_password_check(self):
         user = User(
-            name      = 'Carla',
-            last_name = 'Morrison',
-            email     = 'carla@morrison.com',
             password  = self.pwd,
-        ).save()
+        ).save(nrm.redis)
 
         self.assertTrue(check_password('123456', user.password))
+        self.assertFalse(user.password == '123456')
 
     def test_empty_field_dict(self):
         class Dummy(Model):
             dynamic = Dict()
 
-        a = Dummy(
-            dynamic = {}
-        ).save()
-        loaded_a = Dummy.get(a.id)
+        a = Dummy().save(nrm.redis)
+        loaded_a = Dummy.get(a.id, nrm.redis)
 
         self.assertDictEqual(loaded_a.dynamic, {})
 
@@ -132,14 +138,14 @@ class FieldTestCase(unittest.TestCase):
             dynamic = {
                 '1': 'one',
             },
-        ).save()
+        ).save(nrm.redis)
 
         b = Dummy(
             name = 'dummy',
             dynamic = {
                 '2': 'two',
             },
-        ).save()
+        ).save(nrm.redis)
 
         c = Dummy(
             name = 'dummy',
@@ -147,19 +153,23 @@ class FieldTestCase(unittest.TestCase):
                 '1': 'one',
                 '2': 'two',
             },
-        ).save()
+        ).save(nrm.redis)
 
         # override dict
         a.dynamic = {
             '3': 'thre',
         }
 
-        a.save()
+        a.save(nrm.redis)
 
-        loaded_a = Dummy.get(a.id)
-        loaded_b = Dummy.get(b.id)
-        loaded_c = Dummy.get(c.id)
+        loaded_a = Dummy.get(a.id, nrm.redis)
+        loaded_b = Dummy.get(b.id, nrm.redis)
+        loaded_c = Dummy.get(c.id, nrm.redis)
 
         self.assertDictEqual(a.dynamic, loaded_a.dynamic)
         self.assertDictEqual(b.dynamic, loaded_b.dynamic)
         self.assertDictEqual(c.dynamic, loaded_c.dynamic)
+
+
+if __name__ == '__main__':
+    unittest.main()
