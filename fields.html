@@ -1,0 +1,188 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Fields &#8212; NORM 1.8.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.8.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="NORM" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fields">
+<h1>Fields<a class="headerlink" href="#fields" title="Permalink to this headline">¶</a></h1>
+<p>Fields let you define your object’s properties and transform the values retrieved from the database, we support the following:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">fields.Text</span></code> A simple text field</li>
+<li><code class="docutils literal"><span class="pre">fields.Hash</span></code> A hashed text using bcrypt</li>
+<li><code class="docutils literal"><span class="pre">fields.Bool</span></code> A true/false value</li>
+<li><code class="docutils literal"><span class="pre">fields.Integer</span></code> An integer</li>
+<li><code class="docutils literal"><span class="pre">fields.Float</span></code> A floating point value</li>
+<li><code class="docutils literal"><span class="pre">fields.Datetime</span></code> A date and time</li>
+<li><code class="docutils literal"><span class="pre">fields.Location</span></code> A pair of latitude/longitude</li>
+</ul>
+<div class="section" id="relation-fields">
+<h2>Relation fields<a class="headerlink" href="#relation-fields" title="Permalink to this headline">¶</a></h2>
+<p>We also provide fields for defining relationships with other models in a ORM-fashion</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">fields.SetRelation</span></code> Stored as a set of the related ids</li>
+<li><code class="docutils literal"><span class="pre">fields.SortedSetRelation</span></code> Stored as a sorteed set of the related ids, using a sotring key</li>
+<li><code class="docutils literal"><span class="pre">fields.ForeignIdRelation</span></code> simply stores the string id of the related object</li>
+</ul>
+</div>
+<div class="section" id="indexes">
+<h2>Indexes<a class="headerlink" href="#indexes" title="Permalink to this headline">¶</a></h2>
+<p>Only Text fields are ready to be indexes</p>
+</div>
+<div class="section" id="creating-your-own-fields">
+<h2>Creating your own fields<a class="headerlink" href="#creating-your-own-fields" title="Permalink to this headline">¶</a></h2>
+<p>Simply subclass <code class="docutils literal"><span class="pre">Field</span></code> or <code class="docutils literal"><span class="pre">Relation</span></code>.</p>
+<p>NORM fields follow an specific workflow to read/write from/to the redis database. Such workflow needs the following methods to be implemented (or inherited) for each field:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">__init__</span></code> for field initialization, don’t forget to call the parent’s constructor</li>
+<li><code class="docutils literal"><span class="pre">init</span></code> is called to parse a value given in the model’s constructor</li>
+<li><code class="docutils literal"><span class="pre">recover</span></code> is called to parse a value retrieved from database</li>
+<li><code class="docutils literal"><span class="pre">prepare</span></code> is called to transform values or <em>prepare</em> them to be sent to database</li>
+<li><code class="docutils literal"><span class="pre">to_json</span></code> should return the json-friendly version of the value</li>
+<li><code class="docutils literal"><span class="pre">validate</span></code> is called when doing <code class="docutils literal"><span class="pre">Model.validate(data)</span></code> or <code class="docutils literal"><span class="pre">obj.update(data)</span></code></li>
+</ul>
+<p>Additionally, the following methods are needed for <code class="docutils literal"><span class="pre">Relation</span></code> subclasses:</p>
+<dl class="function">
+<dt id="save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>value</em>, <em>pipeline</em><span class="optional">[</span>, <em>commit=True</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#save" title="Permalink to this definition">¶</a></dt>
+<dd><p>persists this relationship to the database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="relate">
+<code class="descname">relate</code><span class="sig-paren">(</span><em>obj</em>, <em>pipeline</em><span class="sig-paren">)</span><a class="headerlink" href="#relate" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets the given object as related to the one that owns this field</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>pipeline</em><span class="sig-paren">)</span><a class="headerlink" href="#delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>tells what to do when a model with relationships is deleted</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="key">
+<code class="descname">key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#key" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a fully qualified redis key to this relationship</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="get_related_ids">
+<code class="descname">get_related_ids</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#get_related_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>for subclasses of <code class="docutils literal"><span class="pre">SetRelation</span></code>, returns the list of related ids</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="fill">
+<code class="descname">fill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>is called when you need to know the relationships for a model. Usually via the proxy object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="__contains__">
+<code class="descname">__contains__</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#__contains__" title="Permalink to this definition">¶</a></dt>
+<dd><p>is for subclasses of <code class="docutils literal"><span class="pre">SetRelation</span></code> and should tell wether or not the given object is in this relation. Usually called via the proxy object.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">NORM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Fields</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#relation-fields">Relation fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-your-own-fields">Creating your own fields</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">NORM</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Abraham Toriz Cruz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/fields.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
