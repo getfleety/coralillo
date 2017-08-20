@@ -1,4 +1,4 @@
-from norm import create_engine, Model
+from norm import create_engine, Model, datamodel
 from norm.fields import *
 from norm.hashing import check_password
 from datetime import datetime

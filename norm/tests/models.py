@@ -4,7 +4,7 @@ from norm.fields import Text, SetRelation, ForeignIdRelation
 # For one-many relations
 class Pet(Model):
     name = Text()
-    owner = ForeignIdRelation('models.Person', inverse='pets')
+    owner = ForeignIdRelation('norm.tests.models.Person', inverse='pets')
 
 
 class Person(Model):
@@ -15,7 +15,7 @@ class Person(Model):
 # For many to many relations
 class Driver(Model):
     name = Text()
-    cars = SetRelation('models.Car', inverse='drivers')
+    cars = SetRelation('norm.tests.models.Car', inverse='drivers')
 
 
 class Car(Model):

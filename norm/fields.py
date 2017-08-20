@@ -1,6 +1,7 @@
 from .hashing import make_password, is_hashed
 from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
-from .datamodel import debyte_string, Location, debyte_hash
+from .datamodel import debyte_string, debyte_hash
+from . import datamodel
 from importlib import import_module
 from .utils import to_pipeline
 import re
@@ -313,7 +314,7 @@ class Location(Field):
         if value[0] is None:
             return None
 
-        return Location(*value[0])
+        return datamodel.Location(*value[0])
 
     def key(self):
         return self.obj.cls_key() + ':geo_' + self.name

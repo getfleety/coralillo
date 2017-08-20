@@ -1,5 +1,5 @@
 from norm import create_engine
-from models import Pet, Person, Driver, Car
+from .models import Pet, Person, Driver, Car
 import unittest
 
 nrm = create_engine()
