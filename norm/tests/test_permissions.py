@@ -8,6 +8,9 @@ nrm = create_engine()
 class User(Model, PermissionHolder):
     name = fields.Text()
 
+    class Meta:
+        engine = nrm
+
 
 class PermissionTestCase(unittest.TestCase):
 
@@ -15,7 +18,7 @@ class PermissionTestCase(unittest.TestCase):
         nrm.lua.drop(args=['*'])
         self.user = User(
             name      = 'juan',
-        ).save(nrm.redis)
+        ).save()
         self.allow_key = self.user.allow_key()
 
     def test_add_permissions(self):

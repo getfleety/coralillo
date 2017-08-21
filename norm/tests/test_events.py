@@ -9,6 +9,9 @@ class Something(Model):
     name = fields.Text()
     notify = True
 
+    class Meta:
+        engine = nrm
+
 
 class EventTestCase(unittest.TestCase):
 
@@ -20,7 +23,7 @@ class EventTestCase(unittest.TestCase):
         p = nrm.redis.pubsub(ignore_subscribe_messages=True)
         p.subscribe('something')
 
-        fence = Something(name='the fence', abbr='TFC').save(nrm.redis)
+        fence = Something(name='the fence', abbr='TFC').save()
 
         p.get_message() # Consume the subscribe message
         message = p.get_message()
@@ -34,12 +37,12 @@ class EventTestCase(unittest.TestCase):
         p.unsubscribe()
 
     def test_delete_sends_message(self):
-        fence = Something(name='the fence', abbr='TFC').save(nrm.redis)
+        fence = Something(name='the fence', abbr='TFC').save()
 
         p = nrm.redis.pubsub(ignore_subscribe_messages=True)
         p.subscribe('something')
 
-        fence.delete(nrm.redis)
+        fence.delete()
 
         p.get_message()
         message = p.get_message()
@@ -53,12 +56,12 @@ class EventTestCase(unittest.TestCase):
         p.unsubscribe()
 
     def test_update_sends_message(self):
-        fence = Something(name='the fence', abbr='TFC').save(nrm.redis)
+        fence = Something(name='the fence', abbr='TFC').save()
 
         p = nrm.redis.pubsub(ignore_subscribe_messages=True)
         p.subscribe('something')
 
-        fence.update(nrm.redis, name='renamed fence')
+        fence.update(name='renamed fence')
 
         p.get_message()
         message = p.get_message()

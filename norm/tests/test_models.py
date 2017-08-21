@@ -8,10 +8,16 @@ nrm = create_engine()
 class Person(Model):
     name = fields.Text()
 
+    class Meta:
+        engine = nrm
+
 
 class Ship(Model):
     name = fields.Text()
     code = fields.Text(index=True)
+
+    class Meta:
+        engine = nrm
 
 
 class Pet(BoundedModel):
@@ -20,6 +26,9 @@ class Pet(BoundedModel):
     @classmethod
     def prefix(cls):
         return 'testing'
+
+    class Meta:
+        engine = nrm
 
 
 class ModelTestCase(unittest.TestCase):
@@ -30,7 +39,7 @@ class ModelTestCase(unittest.TestCase):
     def test_create_user(self):
         user = Person(
             name      = 'John',
-        ).save(nrm.redis)
+        ).save()
 
         self.assertEqual(user.name, 'John')
 
@@ -38,26 +47,26 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(nrm.redis.hget('person:{}'.format(user.id), 'name'), b'John')
 
     def test_retrieve_user_by_id(self):
-        carla = Person( name = 'Carla',).save(nrm.redis)
-        roberta = Person( name = 'Roberta',).save(nrm.redis)
+        carla = Person( name = 'Carla',).save()
+        roberta = Person( name = 'Roberta',).save()
 
-        read_user = Person.get(carla.id, nrm.redis)
+        read_user = Person.get(carla.id)
 
         self.assertEqual(read_user.name, carla.name)
 
     def test_retrieve_by_index(self):
-        titan = Ship(name='te trece', code = 'T13',).save(nrm.redis)
-        atlan = Ship(name='te catorce', code = 'T14',).save(nrm.redis)
+        titan = Ship(name='te trece', code = 'T13',).save()
+        atlan = Ship(name='te catorce', code = 'T14',).save()
 
-        found_ship = Ship.get_by('code', 'T13', nrm.redis)
+        found_ship = Ship.get_by('code', 'T13')
 
         self.assertIsNotNone(found_ship)
         self.assertTrue(titan == found_ship)
 
     def test_update_keep_index(self):
-        ship = Ship(name='the ship', code='TS').save(nrm.redis)
+        ship = Ship(name='the ship', code='TS').save()
 
-        ship.update(nrm.redis, name='updated name')
+        ship.update(name='updated name')
 
         self.assertEqual(ship.code, 'TS')
         self.assertEqual(ship.name, 'updated name')
@@ -65,9 +74,9 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(debyte_string(nrm.redis.hget('ship:index_code', 'TS')), ship.id)
 
     def test_update_changes_index(self):
-        ship = Ship(code='THECODE').save(nrm.redis)
+        ship = Ship(code='THECODE').save()
 
-        ship.update(nrm.redis, code='NEWCODE')
+        ship.update(code='NEWCODE')
 
         self.assertEqual(ship.code, 'NEWCODE')
 
@@ -75,16 +84,16 @@ class ModelTestCase(unittest.TestCase):
         self.assertIsNone(nrm.redis.hget('ship:index_code', 'THECODE'))
 
     def test_get(self):
-        org = Person(name='Juan').save(nrm.redis)
-        got = Person.get(org.id, nrm.redis)
+        org = Person(name='Juan').save()
+        got = Person.get(org.id)
 
         self.assertTrue(org == got)
 
     def test_get_all(self):
-        p1 = Person(name='Juan').save(nrm.redis)
-        p2 = Person(name='Pepe').save(nrm.redis)
+        p1 = Person(name='Juan').save()
+        p2 = Person(name='Pepe').save()
 
-        allitems = Person.get_all(nrm.redis)
+        allitems = Person.get_all()
 
         allitems.sort(key=lambda x: x.name)
 
@@ -97,7 +106,7 @@ class ModelTestCase(unittest.TestCase):
     def test_bounded_model(self):
         dev = Pet(
             name = 'foo',
-        ).save(nrm.redis)
+        ).save()
 
         self.assertFalse(nrm.redis.exists('pet:'+dev.id))
         self.assertTrue(nrm.redis.exists('testing:pet:'+dev.id))
@@ -107,21 +116,21 @@ class ModelTestCase(unittest.TestCase):
     def test_delete(self):
         dev = Pet(
             code = 'foo',
-        ).save(nrm.redis)
+        ).save()
 
-        self.assertIsNotNone(Pet.get(dev.id, nrm.redis))
+        self.assertIsNotNone(Pet.get(dev.id))
 
-        dev.delete(nrm.redis)
+        dev.delete()
 
-        self.assertIsNone(Pet.get(dev.id, nrm.redis))
+        self.assertIsNone(Pet.get(dev.id))
         self.assertFalse(nrm.redis.sismember('testing:pet:members', dev.id))
 
     def test_delete_index(self):
-        ship = Ship(code='A12').save(nrm.redis)
+        ship = Ship(code='A12').save()
 
         self.assertEqual(debyte_string(nrm.redis.hget('ship:index_code', 'A12')), ship.id)
 
-        ship.delete(nrm.redis)
+        ship.delete()
 
         self.assertFalse(nrm.redis.hexists('ship:index_code', 'A12'))
 

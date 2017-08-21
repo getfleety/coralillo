@@ -9,4 +9,4 @@ class Lua:
 
         for scriptname in scripts:
             with open(os.path.join(SCRIPT_PATH, scriptname)) as script:
-                setattr(self, scriptname, script.read())
+                setattr(self, scriptname.split('.')[0], redis.register_script(script.read()))

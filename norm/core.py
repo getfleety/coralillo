@@ -147,9 +147,10 @@ class Model(Form):
 
         return self
 
-    def update(self, redis, **kwargs):
+    def update(self, **kwargs):
         ''' validates the given data against this object's rules and then
         updates '''
+        redis = type(self).get_redis()
         errors = ValidationErrors()
 
         for fieldname, field in self.proxy:
@@ -176,7 +177,7 @@ class Model(Form):
         if errors.has_errors():
             raise errors
 
-        return self.save(redis)
+        return self.save()
 
     @staticmethod
     def is_object_key(key):
@@ -187,11 +188,13 @@ class Model(Form):
         return re.match('^[\w:]+:[a-f0-9]{32}$', key)
 
     @classmethod
-    def get(cls, id, redis):
+    def get(cls, id):
         ''' Retrieves an object by id. Returns None in case of failure '''
+
         if not id:
             return None
 
+        redis = cls.get_redis()
         key = cls.cls_key() + ':' + id
 
         if not redis.exists(key):
@@ -246,24 +249,26 @@ class Model(Form):
         return obj
 
     @classmethod
-    def get_by(cls, field, value, redis):
+    def get_by(cls, field, value):
         ''' Tries to retrieve an isinstance of this model from the database
         given a value for a defined index. Return None in case of failure '''
+        redis = cls.get_redis()
         key = cls.cls_key()+':index_'+field
 
         id = redis.hget(key, value)
 
         if id:
-            return cls.get(debyte_string(id), redis)
+            return cls.get(debyte_string(id))
 
         return None
 
     @classmethod
-    def get_all(cls, redis):
+    def get_all(cls):
         ''' Gets all available instances of this model from the database '''
+        redis = cls.get_redis()
 
         return list(map(
-            lambda id: cls.get(id, redis),
+            lambda id: cls.get(id),
             list(map(
                 debyte_string,
                 redis.smembers(cls.members_key())
@@ -338,9 +343,11 @@ class Model(Form):
 
         return self.id == other.id
 
-    def delete(self, redis):
+    def delete(self):
         ''' Deletes this model from the database, calling delete in each field
         to properly delete special cases '''
+        redis = type(self).get_redis()
+
         for fieldname, field in self.proxy:
             field.delete(redis)
 

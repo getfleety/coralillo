@@ -392,8 +392,9 @@ class ForeignIdRelation(Relation):
     def unrelate(self, obj, redis):
         redis.hdel(self.obj.key(), self.name, obj.id)
 
-    def set(self, value, redis, *, commit=True):
-        getattr(self.obj.proxy, self.name).fill(redis)
+    def set(self, value, *, commit=True):
+        redis = type(self.obj).get_redis()
+        getattr(self.obj.proxy, self.name).fill()
 
         prev = getattr(self.obj, self.name)
 
@@ -415,7 +416,7 @@ class ForeignIdRelation(Relation):
         setattr(self.obj, self.name, value)
 
     def delete(self, redis):
-        getattr(self.obj.proxy, self.name).fill(redis)
+        getattr(self.obj.proxy, self.name).fill()
         item = getattr(self.obj, self.name)
 
         if item is None: return
@@ -428,10 +429,11 @@ class ForeignIdRelation(Relation):
         elif self.inverse:
             getattr(item.proxy, self.inverse).unrelate(self.obj, redis)
 
-    def fill(self, redis):
+    def fill(self):
+        redis = type(self.obj).get_redis()
         value = debyte_string(redis.hget(self.obj.key(), self.name))
 
-        setattr(self.obj, self.name, self.model().get(value, redis))
+        setattr(self.obj, self.name, self.model().get(value))
 
 
 class MultipleRelation(Relation):
@@ -439,8 +441,9 @@ class MultipleRelation(Relation):
     def relate_all(self, value, pipe):
         raise NotImplementedError('must be implemented in subclass')
 
-    def set(self, value, redis, *, commit=True):
+    def set(self, value, *, commit=True):
         key  = self.key()
+        redis = type(self.obj).get_redis()
         pipe = to_pipeline(redis)
 
         pipe.delete(key)
@@ -483,11 +486,12 @@ class MultipleRelation(Relation):
             return []
         return proposed
 
-    def fill(self, redis, **kwargs):
+    def fill(self, **kwargs):
         ''' Loads the relationships into this model. They are not loaded by
         default '''
+        redis = type(self.obj).get_redis()
         related = list(map(
-            lambda id : self.model().get(debyte_string(id), redis),
+            lambda id : self.model().get(debyte_string(id)),
             self.get_related_ids(redis, **kwargs)
         ))
 
@@ -496,7 +500,7 @@ class MultipleRelation(Relation):
     def delete(self, redis):
         key = self.key()
 
-        getattr(self.obj.proxy, self.name).fill(redis)
+        getattr(self.obj.proxy, self.name).fill()
         items = getattr(self.obj, self.name)
 
         if self.on_delete == 'restrict' and len(items) > 0:
@@ -504,7 +508,7 @@ class MultipleRelation(Relation):
 
         for item in items:
             if self.on_delete == 'cascade':
-                item.delete(redis)
+                item.delete()
             elif self.inverse:
                 getattr(item.proxy, self.inverse).unrelate(self.obj, redis)
 
@@ -536,10 +540,11 @@ class SetRelation(MultipleRelation):
 
         return redis.smembers(key)
 
-    # TODO restore __contains__
-    def has(self, item, redis):
+    def __contains__(self, item):
         if not isinstance(item, self.model()):
             return False
+
+        redis = type(self.obj).get_redis()
 
         return redis.sismember(self.key(), item.id)
 
@@ -580,10 +585,10 @@ class SortedSetRelation(MultipleRelation):
 
         return redis.zrange(key, 0, -1)
 
-    def has(self, item, redis):
+    def __contains__(self, item):
         if not isinstance(item, self.model()):
             return False
 
-        redis = self.get_redis()
+        redis = type(self.obj).get_redis()
 
         return redis.zscore(self.key(), item.id) is not None

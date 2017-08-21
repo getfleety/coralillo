@@ -15,6 +15,9 @@ time.tzset()
 class User(Model):
     password = Hash()
 
+    class Meta:
+        engine = nrm
+
 
 class FieldTestCase(unittest.TestCase):
 
@@ -105,15 +108,18 @@ class FieldTestCase(unittest.TestCase):
         class MyModel(Model):
             field = Location()
 
-        obj = MyModel(field = datamodel.Location(-103.3590, 20.7240)).save(nrm.redis)
+            class Meta:
+                engine = nrm
+
+        obj = MyModel(field = datamodel.Location(-103.3590, 20.7240)).save()
 
         self.assertEqual(nrm.redis.type('mymodel:geo_field'), b'zset')
-        self.assertEqual(MyModel.get(obj.id, nrm.redis).field, datamodel.Location(-103.3590, 20.7240))
+        self.assertEqual(MyModel.get(obj.id).field, datamodel.Location(-103.3590, 20.7240))
 
     def test_password_check(self):
         user = User(
             password  = self.pwd,
-        ).save(nrm.redis)
+        ).save()
 
         self.assertTrue(check_password('123456', user.password))
         self.assertFalse(user.password == '123456')
@@ -122,8 +128,11 @@ class FieldTestCase(unittest.TestCase):
         class Dummy(Model):
             dynamic = Dict()
 
-        a = Dummy().save(nrm.redis)
-        loaded_a = Dummy.get(a.id, nrm.redis)
+            class Meta:
+                engine = nrm
+
+        a = Dummy().save()
+        loaded_a = Dummy.get(a.id)
 
         self.assertDictEqual(loaded_a.dynamic, {})
 
@@ -132,20 +141,23 @@ class FieldTestCase(unittest.TestCase):
             name           = Text()
             dynamic        = Dict()
 
+            class Meta:
+                engine = nrm
+
         # Create and save models with a dict field
         a = Dummy(
             name = 'dummy',
             dynamic = {
                 '1': 'one',
             },
-        ).save(nrm.redis)
+        ).save()
 
         b = Dummy(
             name = 'dummy',
             dynamic = {
                 '2': 'two',
             },
-        ).save(nrm.redis)
+        ).save()
 
         c = Dummy(
             name = 'dummy',
@@ -153,18 +165,18 @@ class FieldTestCase(unittest.TestCase):
                 '1': 'one',
                 '2': 'two',
             },
-        ).save(nrm.redis)
+        ).save()
 
         # override dict
         a.dynamic = {
             '3': 'thre',
         }
 
-        a.save(nrm.redis)
+        a.save()
 
-        loaded_a = Dummy.get(a.id, nrm.redis)
-        loaded_b = Dummy.get(b.id, nrm.redis)
-        loaded_c = Dummy.get(c.id, nrm.redis)
+        loaded_a = Dummy.get(a.id)
+        loaded_b = Dummy.get(b.id)
+        loaded_c = Dummy.get(c.id)
 
         self.assertDictEqual(a.dynamic, loaded_a.dynamic)
         self.assertDictEqual(b.dynamic, loaded_b.dynamic)
