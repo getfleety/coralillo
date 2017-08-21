@@ -1,5 +1,6 @@
 include LICENSE.txt
 include README.rst
 exclude __pycache__
+recursive-include norm *.py *.lua
 recursive-include tests *
 recursive-exclude tests *.pyc
