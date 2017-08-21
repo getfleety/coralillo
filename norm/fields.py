@@ -254,6 +254,23 @@ class Float(Field):
 class Datetime(Field):
     ''' A datetime that can be used transparently as such in the model '''
 
+    def validate(self, value):
+        '''
+        Validates data obtained from a request in ISO 8061 and returns it in Datetime data type
+        '''
+
+        # Validate required
+        if self.required:
+            self.validate_required(value)
+
+        # parse YYYY-MM-DDTHH:mm:ss.µµµZ string
+        try:
+            value = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+        except ValueError:
+            raise InvalidFieldError('Invalid ISO format date')
+
+        return value
+
     def recover(self, data, redis=None):
         value = data.get(self.name)
 
