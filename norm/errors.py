@@ -4,6 +4,8 @@ class ModelNotFoundError(Exception): pass
 
 class DeleteRestrictedError(Exception): pass
 
+class UnboundModelError(Exception): pass
+
 
 class ValidationErrors(Exception):
 

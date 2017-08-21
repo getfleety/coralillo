@@ -2,7 +2,7 @@ from copy import copy
 from uuid import uuid1
 from norm.fields import Field, Relation, MultipleRelation, ForeignIdRelation
 from norm.datamodel import debyte_hash, debyte_string
-from norm.errors import ValidationErrors
+from norm.errors import ValidationErrors, UnboundModelError
 from norm.utils import to_pipeline
 from itertools import starmap
 import json
@@ -110,9 +110,21 @@ class Model(Form):
                 value
             )
 
-    def save(self, redis):
+    @classmethod
+    def get_engine(cls):
+        try:
+            return cls.Meta.engine
+        except AttributeError:
+            raise UnboundModelError('The model {} is not bound to any engine'.format(cls))
+
+    @classmethod
+    def get_redis(cls):
+        return cls.get_engine().redis
+
+    def save(self):
         ''' Persists this object to the database. Each field knows how to store
         itself so we don't have to worry about it '''
+        redis = type(self).get_redis()
         pipe = to_pipeline(redis)
 
         pipe.hset(self.key(), 'id', self.id)

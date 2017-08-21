@@ -536,6 +536,7 @@ class SetRelation(MultipleRelation):
 
         return redis.smembers(key)
 
+    # TODO restore __contains__
     def has(self, item, redis):
         if not isinstance(item, self.model()):
             return False
