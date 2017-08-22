@@ -8,7 +8,7 @@ import re
 import datetime
 
 
-class Field:
+class Field(object):
     ''' Defines a field of a model. Represents how to store this specific
     datatype in the redis database '''
 
@@ -169,7 +169,7 @@ class Hash(Text):
 
     def validate(self, value, redis):
         ''' hash passwords given via http '''
-        value = super().validate(value, redis)
+        value = super(Hash, self).validate(value, redis)
 
         if is_hashed(value):
             return value
@@ -403,7 +403,7 @@ class Relation(Field):
 class ForeignIdRelation(Relation):
 
     def __init__(self, model, private=False, on_delete=None, inverse=None):
-        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
+        super(ForeignIdRelation, self).__init__(model, private=private, on_delete=on_delete, inverse=inverse)
         self.default   = None
 
     def relate(self, obj, pipeline):
@@ -539,7 +539,7 @@ class SetRelation(MultipleRelation):
     ''' A relationship with another model '''
 
     def __init__(self, model, private=False, on_delete=None, inverse=None):
-        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
+        super(SetRelation, self).__init__(model, private=private, on_delete=on_delete, inverse=inverse)
         self.default   = []
         self.fillable  = False
 
@@ -574,7 +574,7 @@ class SortedSetRelation(MultipleRelation):
     time '''
 
     def __init__(self, model, sort_key, **kwargs):
-        super().__init__(model, **kwargs)
+        super(SortedSetRelation, self).__init__(model, **kwargs)
         self.sort_key = sort_key
         self.default   = []
         self.fillable  = False

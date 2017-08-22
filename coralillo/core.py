@@ -31,7 +31,7 @@ class Proxy:
             f.obj = self.instance
             return (ft[0], f)
 
-        return map(
+        return iter(map(
             add_attrs,
             filter(
                 lambda ft: isinstance(ft[1], Field),
@@ -43,10 +43,10 @@ class Proxy:
                     )
                 )
             )
-        )
+        ))
 
 
-class Form:
+class Form(object):
     '''Defines an object with fields'''
 
     def __init__(self):
@@ -108,7 +108,7 @@ class Model(Form):
     notify = False
 
     def __init__(self, id=None, **kwargs):
-        super().__init__()
+        super(Model, self).__init__()
         # Generate this object's id using a unique 128-bit
         # check this to get the time of creation https://stackoverflow.com/questions/3795554/extract-the-time-from-a-uuid-v1-in-python
         self.id = id if id else uuid1().hex
