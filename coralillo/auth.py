@@ -13,7 +13,7 @@ class PermissionHolder:
 
         return engine.lua.allow(keys=[self.allow_key()], args=[objspec])
 
-    def is_allowed(self, objspec, *, tail=None):
+    def is_allowed(self, objspec, tail=None):
         engine = type(self).get_engine()
 
         return engine.lua.is_allowed(keys=[self.allow_key()], args=[objspec, tail])

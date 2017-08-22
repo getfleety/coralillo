@@ -12,7 +12,7 @@ class Field:
     ''' Defines a field of a model. Represents how to store this specific
     datatype in the redis database '''
 
-    def __init__(self, *, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, fillable=True):
+    def __init__(self, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, fillable=True):
         # This field's value is mapped to the ID in a redis hash so you can Model.get_by(field, value)
         self.index     = index     
 
@@ -79,7 +79,7 @@ class Field:
         ''' Format the value to be presented in json format '''
         return value
 
-    def save(self, value, redis, *, commit=True):
+    def save(self, value, redis, commit=True):
         ''' Sets this fields value in the databse '''
         value = self.prepare(value)
 
@@ -301,7 +301,7 @@ class Location(Field):
     def prepare(self, value):
         return value
 
-    def save(self, value, redis, *, commit=True):
+    def save(self, value, redis, commit=True):
         key = self.key()
 
         if value is not None:
@@ -346,7 +346,7 @@ class Dict(Field):
     def prepare(self, value):
         return value
 
-    def save(self, value, redis, *, commit=True):
+    def save(self, value, redis, commit=True):
         key = self.key()
 
         if bool(value) is not False:
@@ -382,7 +382,7 @@ class Dict(Field):
 
 class Relation(Field):
 
-    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+    def __init__(self, model, private=False, on_delete=None, inverse=None):
         self.modelspec = model
         self.private   = private
         self.on_delete = on_delete
@@ -402,7 +402,7 @@ class Relation(Field):
 
 class ForeignIdRelation(Relation):
 
-    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+    def __init__(self, model, private=False, on_delete=None, inverse=None):
         super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
         self.default   = None
 
@@ -412,7 +412,7 @@ class ForeignIdRelation(Relation):
     def unrelate(self, obj, redis):
         redis.hdel(self.obj.key(), self.name, obj.id)
 
-    def set(self, value, *, commit=True):
+    def set(self, value, commit=True):
         redis = type(self.obj).get_redis()
         getattr(self.obj.proxy, self.name).fill()
 
@@ -461,7 +461,7 @@ class MultipleRelation(Relation):
     def relate_all(self, value, pipe):
         raise NotImplementedError('must be implemented in subclass')
 
-    def set(self, value, *, commit=True):
+    def set(self, value, commit=True):
         key  = self.key()
         redis = type(self.obj).get_redis()
         pipe = to_pipeline(redis)
@@ -538,7 +538,7 @@ class MultipleRelation(Relation):
 class SetRelation(MultipleRelation):
     ''' A relationship with another model '''
 
-    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+    def __init__(self, model, private=False, on_delete=None, inverse=None):
         super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
         self.default   = []
         self.fillable  = False
@@ -597,7 +597,7 @@ class SortedSetRelation(MultipleRelation):
     def unrelate(self, obj, redis):
         redis.zrem(self.key(), obj.id)
 
-    def get_related_ids(self, redis, *, score=None):
+    def get_related_ids(self, redis, score=None):
         key = self.key()
 
         if score:

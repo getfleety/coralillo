@@ -303,7 +303,7 @@ class Model(Form):
 
         return self.key() + ':' + to
 
-    def to_json(self, *, with_relations=True):
+    def to_json(self, with_relations=True):
         ''' Serializes this model to a JSON representation so it can be sent
         via an HTTP REST API '''
         json = {
