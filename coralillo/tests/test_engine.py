@@ -40,6 +40,14 @@ class EngineTestCase(unittest.TestCase):
         with self.assertRaises(UnboundModelError):
             Dog(mame='doggo').save()
 
+    def test_register_lua_script(self):
+        eng = Engine(db=0)
+
+        eng.lua.register('my_script', 'return ARGV[1]')
+
+        self.assertIsNotNone(eng.lua.my_script)
+        self.assertEqual(eng.lua.my_script(args=[4]), b'4')
+
 
 if __name__ == '__main__':
     unittest.main()

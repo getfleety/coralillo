@@ -35,10 +35,10 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.recover({'field': None}, 'field'), None)
 
     def test_field_text_validate(self):
-        field = Text()
+        field = Text(name='field')
 
         with self.assertRaises(MissingFieldError):
-            field.validate('', 'field')
+            field.validate('', None)
 
     def test_field_hash(self):
         field = Hash(name='field')

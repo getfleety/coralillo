@@ -53,7 +53,7 @@ class Field:
         ''' Validates the given value agains this field's 'required' property
         '''
         if self.required and (value is None or value==''):
-            raise MissingFieldError([self.name])
+            raise MissingFieldError(self.name)
 
     def init(self, value):
         ''' Returns the value that will be set in the model when it is passed
@@ -102,7 +102,7 @@ class Field:
         if self.index:
             redis.hdel(self.key(), getattr(self.obj, self.name))
 
-    def validate(self, value, redis=None):
+    def validate(self, value, redis):
         '''
         Validates data obtained from a request and returns it in the apropiate
         format
@@ -117,10 +117,10 @@ class Field:
         self.validate_required(value)
 
         if self.regex and not re.match(self.regex, value, flags=re.ASCII):
-            raise InvalidFieldError([self.name])
+            raise InvalidFieldError(self.name)
 
         if self.forbidden and value in self.forbidden:
-            raise ReservedFieldError([self.name])
+            raise ReservedFieldError(self.name)
 
         if self.index:
             key = self.key()
@@ -129,7 +129,7 @@ class Field:
             old_value = getattr(self.obj, self.name)
 
             if old is not None and old != self.obj.id:
-                raise NotUniqueFieldError([self.name])
+                raise NotUniqueFieldError(self.name)
             elif old_value != value:
                 self.obj._old[self.name] = old_value
 
@@ -167,7 +167,7 @@ class Hash(Text):
 
         return make_password(value)
 
-    def validate(self, value, redis=None):
+    def validate(self, value, redis):
         ''' hash passwords given via http '''
         value = super().validate(value, redis)
 
@@ -180,7 +180,7 @@ class Hash(Text):
 class Bool(Field):
     ''' A boolean value '''
 
-    def validate(self, value, redis=None):
+    def validate(self, value, redis):
         value = self.value_or_default(value)
 
         if value is None: return None
@@ -205,7 +205,7 @@ class Bool(Field):
 class Integer(Field):
     ''' An integer value '''
 
-    def validate(self, value, redis=None):
+    def validate(self, value, redis):
         value = self.value_or_default(value)
 
         self.validate_required(value)
@@ -229,7 +229,7 @@ class Integer(Field):
 
 class Float(Field):
 
-    def validate(self, value, redis=None):
+    def validate(self, value, redis):
         value = self.value_or_default(value)
 
         self.validate_required(value)
@@ -254,20 +254,23 @@ class Float(Field):
 class Datetime(Field):
     ''' A datetime that can be used transparently as such in the model '''
 
-    def validate(self, value):
+    def validate(self, value, redis):
         '''
         Validates data obtained from a request in ISO 8061 and returns it in Datetime data type
         '''
 
-        # Validate required
-        if self.required:
-            self.validate_required(value)
+        value = self.value_or_default(value)
 
-        # parse YYYY-MM-DDTHH:mm:ss.µµµZ string
-        try:
-            value = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
-        except ValueError:
-            raise InvalidFieldError('Invalid ISO format date')
+        self.validate_required(value)
+
+        if value is None:
+            return None
+
+        if type(value) == 'str':
+            try:
+                value = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+            except ValueError:
+                raise InvalidFieldError('Invalid ISO format date')
 
         return value
 
@@ -289,7 +292,7 @@ class Datetime(Field):
         if value is None:
             return None
 
-        return value.isoformat() + 'Z'
+        return value.replace(microsecond=0).isoformat() + 'Z'
 
 
 class Location(Field):
@@ -480,9 +483,9 @@ class MultipleRelation(Relation):
 
         setattr(self.obj, self.name, value)
 
-    def add(self, value, *, commit=True, pipeline=None):
+    def add(self, value):
         key   = self.key()
-        redis = self.get_redis(pipeline)
+        redis = type(self.obj).get_redis()
 
         self.relate(value, redis)
 

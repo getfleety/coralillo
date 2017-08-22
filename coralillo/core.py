@@ -2,7 +2,7 @@ from copy import copy
 from uuid import uuid1
 from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
 from coralillo.datamodel import debyte_hash, debyte_string
-from coralillo.errors import ValidationErrors, UnboundModelError
+from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
 from coralillo.utils import to_pipeline
 from itertools import starmap
 import json
@@ -56,8 +56,9 @@ class Form:
     @classmethod
     def validate(cls, **kwargs):
         # catch possible errors
-        errors = MissingFieldError()
+        errors = ValidationErrors()
         obj = cls()
+        redis = cls.get_redis()
 
         for fieldname, field in obj.proxy:
             if not field.fillable:
@@ -66,7 +67,7 @@ class Form:
                 try:
                     value = field.validate(kwargs.get(fieldname), redis)
                 except BadField as e:
-                    errors.concat(e)
+                    errors.append(e)
                     continue
 
             setattr(
@@ -85,6 +86,17 @@ class Form:
             lambda fn, f: '{}={}'.format(fn, repr(getattr(self, fn))),
             self.proxy,
         )))
+
+    @classmethod
+    def get_engine(cls):
+        try:
+            return cls.Meta.engine
+        except AttributeError:
+            raise UnboundModelError('The model {} is not bound to any engine'.format(cls))
+
+    @classmethod
+    def get_redis(cls):
+        return cls.get_engine().redis
 
 
 class Model(Form):
@@ -109,17 +121,6 @@ class Model(Form):
                 fieldname,
                 value
             )
-
-    @classmethod
-    def get_engine(cls):
-        try:
-            return cls.Meta.engine
-        except AttributeError:
-            raise UnboundModelError('The model {} is not bound to any engine'.format(cls))
-
-    @classmethod
-    def get_redis(cls):
-        return cls.get_engine().redis
 
     def save(self):
         ''' Persists this object to the database. Each field knows how to store
@@ -165,7 +166,7 @@ class Model(Form):
             try:
                 value = field.validate(kwargs.get(fieldname), redis)
             except BadField as e:
-                errors.concat(e)
+                errors.append(e)
                 continue
 
             setattr(
@@ -220,6 +221,7 @@ class Model(Form):
         ''' reloads this object so if it was updated in the database it now
         contains the new values'''
         key = self.key()
+        redis = type(self).get_redis()
 
         if not redis.exists(key):
             raise ModelNotFoundError('This object has been deleted')

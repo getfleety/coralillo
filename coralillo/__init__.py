@@ -15,4 +15,4 @@ class Engine:
         self.lua = Lua(self.redis)
 
 
-from coralillo.core import Model, BoundedModel
+from coralillo.core import Form, Model, BoundedModel

@@ -1,8 +1,5 @@
 from coralillo.datamodel import debyte_set
 
-from inspect import isclass
-import re
-
 
 class PermissionHolder:
 
@@ -11,14 +8,22 @@ class PermissionHolder:
         information '''
         return self.key() + ':allow'
 
-    def allow(self, objspec, engine):
+    def allow(self, objspec):
+        engine = type(self).get_engine()
+
         return engine.lua.allow(keys=[self.allow_key()], args=[objspec])
 
-    def is_allowed(self, objspec, engine, *, tail=None):
+    def is_allowed(self, objspec, *, tail=None):
+        engine = type(self).get_engine()
+
         return engine.lua.is_allowed(keys=[self.allow_key()], args=[objspec, tail])
 
-    def revoke(self, objspec, engine):
-        engine.redis.srem(self.allow_key(), objspec)
+    def revoke(self, objspec):
+        engine = type(self).get_engine()
 
-    def get_perms(self, engine):
+        return engine.redis.srem(self.allow_key(), objspec)
+
+    def get_perms(self):
+        engine = type(self).get_engine()
+
         return debyte_set(engine.redis.smembers(self.allow_key()))
