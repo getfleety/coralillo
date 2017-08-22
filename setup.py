@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='coralillo',
 
-    version='0.1.1',
+    version='0.1.3',
 
     description='A Redis Object Mapper',
     long_description="""Coralillo provides a familiar API to store your objects
@@ -49,7 +49,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['coralillo', 'coralillo.lua'],
+    packages=find_packages(),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
