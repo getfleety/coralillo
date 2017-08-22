@@ -1,8 +1,8 @@
-from norm import datamodel, create_engine, Model, BoundedModel, fields
+from norm import datamodel, Engine, Model, BoundedModel, fields
 from norm.datamodel import debyte_string
 import unittest
 
-nrm = create_engine()
+nrm = Engine()
 
 
 class Person(Model):

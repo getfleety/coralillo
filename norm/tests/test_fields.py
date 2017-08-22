@@ -1,4 +1,4 @@
-from norm import create_engine, Model, datamodel
+from norm import Engine, Model, datamodel
 from norm.fields import *
 from norm.hashing import check_password
 from datetime import datetime
@@ -6,7 +6,7 @@ import unittest
 import time
 import os
 
-nrm = create_engine()
+nrm = Engine()
 
 os.environ['TZ'] = 'UTC'
 time.tzset()

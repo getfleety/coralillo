@@ -1,13 +1,16 @@
-from norm import create_engine, Model, fields
+from norm import Engine, Model, fields
 from norm.errors import UnboundModelError
 import unittest
 
 
 class EngineTestCase(unittest.TestCase):
 
+    def test_create_engine_with_url(self):
+        url = 'redis://localhost:6379/0'
+
     def test_create_engine(self):
-        eng1 = create_engine(db=11)
-        eng2 = create_engine(db=12)
+        eng1 = Engine(db=11)
+        eng2 = Engine(db=12)
 
         class Dog(Model):
             name = fields.Text()

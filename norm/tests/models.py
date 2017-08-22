@@ -1,7 +1,7 @@
-from norm import Model, create_engine
+from norm import Model, Engine
 from norm.fields import Text, SetRelation, ForeignIdRelation
 
-nrm = create_engine()
+nrm = Engine()
 
 
 # For one-many relations

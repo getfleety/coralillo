@@ -1,8 +1,8 @@
 import unittest
-from norm import create_engine, Model, fields
+from norm import Engine, Model, fields
 import json
 
-nrm = create_engine()
+nrm = Engine()
 
 
 class Something(Model):

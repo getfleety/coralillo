@@ -5,12 +5,14 @@ from norm.lua import Lua
 class Engine:
 
     def __init__(self, **kwargs):
-        self.redis = redis.StrictRedis(**kwargs)
+        try:
+            url = kwargs.pop('url')
+
+            self.redis = redis.StrictRedis.from_url(url)
+        except:
+            self.redis = redis.StrictRedis(**kwargs)
 
         self.lua = Lua(self.redis)
 
-
-def create_engine(**kwargs):
-    return Engine(**kwargs)
 
 from norm.core import Model, BoundedModel

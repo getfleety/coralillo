@@ -1,8 +1,8 @@
-from norm import Model, fields, create_engine
+from norm import Model, fields, Engine
 from norm.auth import PermissionHolder
 import unittest
 
-nrm = create_engine()
+nrm = Engine()
 
 
 class User(Model, PermissionHolder):
