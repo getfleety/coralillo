@@ -25,11 +25,11 @@ class EventTestCase(unittest.TestCase):
 
         fence = Something(name='the fence', abbr='TFC').save()
 
-        p.get_message() # Consume the subscribe message
+        p.get_message()
         message = p.get_message()
 
         self.assertIsNotNone(message)
-        self.assertDictEqual(json.loads(message['data']), {
+        self.assertDictEqual(json.loads(message['data'].decode('utf8')), {
             'event': 'create',
             'data': fence.to_json(),
         })
@@ -48,7 +48,7 @@ class EventTestCase(unittest.TestCase):
         message = p.get_message()
 
         self.assertIsNotNone(message)
-        self.assertDictEqual(json.loads(message['data']), {
+        self.assertDictEqual(json.loads(message['data'].decode('utf8')), {
             'event': 'delete',
             'data': fence.to_json(),
         })
@@ -67,7 +67,7 @@ class EventTestCase(unittest.TestCase):
         message = p.get_message()
 
         self.assertIsNotNone(message)
-        data = json.loads(message['data'])
+        data = json.loads(message['data'].decode('utf8'))
         self.assertDictEqual(data, {
             'event': 'update',
             'data': fence.to_json(),

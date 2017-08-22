@@ -314,7 +314,7 @@ class Model(Form):
         }
 
         if with_relations:
-            json['relations'] = {**dict(starmap(
+            json['relations'] = dict(starmap(
                 lambda fn, f: (fn, list(map(
                     lambda m: m.to_json(with_relations=False),
                     getattr(self, fn)
@@ -323,13 +323,15 @@ class Model(Form):
                     lambda ft: isinstance(ft[1], MultipleRelation),
                     self.proxy
                 )
-            )), **dict(starmap(
+            ))
+
+            json['relations'].update(dict(starmap(
                 lambda fn, f: (fn, getattr(self, fn).to_json() if isinstance(getattr(self, fn), Model) else None),
                 filter(
                     lambda ft: isinstance(ft[1], ForeignIdRelation),
                     self.proxy
                 )
-            ))}
+            )))
         else:
             json['relations'] = dict()
 
