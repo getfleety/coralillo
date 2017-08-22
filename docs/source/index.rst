@@ -1,21 +1,19 @@
-.. NORM documentation master file, created by
+.. Coralillo documentation master file, created by
    sphinx-quickstart on Tue Aug  1 10:58:55 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-NORM
-====
+Coralillo
+=========
 
-**Not an Object-Relational Mapping** or **NORM Object-Redis Mapping**
-
-NORM is a tool intended to provide a convenient API over the Redis data structure store in a similar way that traditional ORMs do.
+Coralillo is a tool intended to provide a convenient API over the Redis data structure store in a similar way that traditional ORMs do.
 
 Basic Usage
 -----------
 
 ::
 
-    from norm import Model, fields
+    from coralillo import Model, fields
 
     # Declare your models
     class User(Model):
@@ -44,7 +42,7 @@ Relationships
 
 ::
 
-    from norm import Model, fields
+    from coralillo import Model, fields
 
     class Group(Model):
         name  = fields.Text()

@@ -1,5 +1,5 @@
-from norm import Model, Engine
-from norm.fields import Text, SetRelation, ForeignIdRelation
+from coralillo import Model, Engine
+from coralillo.fields import Text, SetRelation, ForeignIdRelation
 
 nrm = Engine()
 
@@ -7,7 +7,7 @@ nrm = Engine()
 # For one-many relations
 class Pet(Model):
     name = Text()
-    owner = ForeignIdRelation('norm.tests.models.Person', inverse='pets')
+    owner = ForeignIdRelation('coralillo.tests.models.Person', inverse='pets')
 
     class Meta:
         engine = nrm
@@ -24,7 +24,7 @@ class Person(Model):
 # For many to many relations
 class Driver(Model):
     name = Text()
-    cars = SetRelation('norm.tests.models.Car', inverse='drivers')
+    cars = SetRelation('coralillo.tests.models.Car', inverse='drivers')
 
     class Meta:
         engine = nrm

@@ -6,15 +6,15 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 setup(
-    name='norm',
+    name='coralillo',
 
     version='1.0.0',
 
     description='A Redis Object Mapper',
-    long_description="""NORM provides a familiar API to store your objects
+    long_description="""Coralillo provides a familiar API to store your objects
     in a redis database.""",
 
-    url='https://github.com/categulario/norm',
+    url='https://github.com/categulario/coralillo',
 
     author='Abraham Toriz Cruz',
     author_email='categulario@gmail.com',
@@ -51,7 +51,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['norm'],
+    packages=['coralillo'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -72,5 +72,5 @@ setup(
         'test': [],
     },
 
-    test_suite = 'norm.tests.test_all',
+    test_suite = 'coralillo.tests.test_all',
 )

@@ -1,4 +1,4 @@
-from norm.datamodel import debyte_set
+from coralillo.datamodel import debyte_set
 
 from inspect import isclass
 import re

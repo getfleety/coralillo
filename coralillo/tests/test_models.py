@@ -1,5 +1,5 @@
-from norm import datamodel, Engine, Model, BoundedModel, fields
-from norm.datamodel import debyte_string
+from coralillo import datamodel, Engine, Model, BoundedModel, fields
+from coralillo.datamodel import debyte_string
 import unittest
 
 nrm = Engine()

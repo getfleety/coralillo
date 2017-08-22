@@ -1,13 +1,11 @@
-Norm
-====
+Coralillo
+=========
 
-Not an Object-Relational Mapping
+Un ORM para redis / A redis ORM
 
-Norm Object-Redis Mapping
-
-Installation
+Instalación / Installation
 ------------
 
 .. code-block:: bash
 
-    $ pip install norm
+    $ pip install coralillo

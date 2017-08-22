@@ -1,5 +1,5 @@
 import redis
-from norm.lua import Lua
+from coralillo.lua import Lua
 
 
 class Engine:
@@ -15,4 +15,4 @@ class Engine:
         self.lua = Lua(self.redis)
 
 
-from norm.core import Model, BoundedModel
+from coralillo.core import Model, BoundedModel

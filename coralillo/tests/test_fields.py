@@ -1,6 +1,6 @@
-from norm import Engine, Model, datamodel
-from norm.fields import *
-from norm.hashing import check_password
+from coralillo import Engine, Model, datamodel
+from coralillo.fields import *
+from coralillo.hashing import check_password
 from datetime import datetime
 import unittest
 import time

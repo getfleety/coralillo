@@ -1,5 +1,5 @@
-from norm import Model, fields, Engine
-from norm.auth import PermissionHolder
+from coralillo import Model, fields, Engine
+from coralillo.auth import PermissionHolder
 import unittest
 
 nrm = Engine()

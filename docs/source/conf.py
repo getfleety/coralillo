@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# NORM documentation build configuration file, created by
+# Coralillo documentation build configuration file, created by
 # sphinx-quickstart on Tue Aug  1 10:58:55 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -53,7 +53,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'NORM'
+project = 'Coralillo'
 copyright = '2017, Abraham Toriz Cruz'
 author = 'Abraham Toriz Cruz'
 
@@ -122,7 +122,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'NORMdoc'
+htmlhelp_basename = 'Coralillodoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -149,7 +149,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'NORM.tex', 'NORM Documentation',
+    (master_doc, 'Coralillo.tex', 'Coralillo Documentation',
      'Abraham Toriz Cruz', 'manual'),
 ]
 
@@ -159,7 +159,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'norm', 'NORM Documentation',
+    (master_doc, 'coralillo', 'Coralillo Documentation',
      [author], 1)
 ]
 
@@ -170,8 +170,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'NORM', 'NORM Documentation',
-     author, 'NORM', 'One line description of project.',
+    (master_doc, 'Coralillo', 'Coralillo Documentation',
+     author, 'Coralillo', 'One line description of project.',
      'Miscellaneous'),
 ]
 

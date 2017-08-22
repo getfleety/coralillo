@@ -1,5 +1,5 @@
-from norm import Engine, Model, fields
-from norm.errors import UnboundModelError
+from coralillo import Engine, Model, fields
+from coralillo.errors import UnboundModelError
 import unittest
 
 

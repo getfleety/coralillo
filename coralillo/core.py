@@ -1,9 +1,9 @@
 from copy import copy
 from uuid import uuid1
-from norm.fields import Field, Relation, MultipleRelation, ForeignIdRelation
-from norm.datamodel import debyte_hash, debyte_string
-from norm.errors import ValidationErrors, UnboundModelError
-from norm.utils import to_pipeline
+from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
+from coralillo.datamodel import debyte_hash, debyte_string
+from coralillo.errors import ValidationErrors, UnboundModelError
+from coralillo.utils import to_pipeline
 from itertools import starmap
 import json
 

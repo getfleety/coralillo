@@ -1,5 +1,5 @@
 import unittest
-from norm import Engine, Model, fields
+from coralillo import Engine, Model, fields
 import json
 
 nrm = Engine()
