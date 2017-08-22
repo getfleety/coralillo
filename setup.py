@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='coralillo',
 
-    version='1.0.0',
+    version='0.1.1',
 
     description='A Redis Object Mapper',
     long_description="""Coralillo provides a familiar API to store your objects
@@ -49,7 +49,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['coralillo'],
+    packages=['coralillo', 'coralillo.lua'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
