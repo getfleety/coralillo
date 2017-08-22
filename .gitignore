@@ -6,4 +6,4 @@ _build
 .python-version
 .cache
 .eggs
-env
+env*
