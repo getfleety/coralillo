@@ -266,7 +266,7 @@ class Datetime(Field):
         if value is None:
             return None
 
-        if type(value) == 'str':
+        if type(value) == str:
             try:
                 value = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
             except ValueError:

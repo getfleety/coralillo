@@ -6,6 +6,7 @@ from coralillo.errors import ValidationErrors, UnboundModelError, BadField, Mode
 from coralillo.utils import to_pipeline
 from itertools import starmap
 import json
+import re
 
 
 class Proxy:
