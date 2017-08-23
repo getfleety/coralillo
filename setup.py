@@ -10,7 +10,7 @@ setup(
 
     version='0.2.0',
 
-    description='A Redis Object Mapper',
+    description='An Object-Redis Mapping',
     long_description="""Coralillo provides a familiar API to store your objects
     in a redis database.""",
 
