@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='coralillo',
 
-    version='0.2.0',
+    version='0.2.1',
 
     description='An Object-Redis Mapping',
     long_description="""Coralillo provides a familiar API to store your objects
@@ -21,7 +21,6 @@ setup(
 
     license='MIT',
 
-    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -51,9 +50,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=find_packages(),
 
-    # Alternatively, if you want to distribute just a my_module.py, uncomment
-    # this:
-    #   py_modules=["my_module"],
+    package_data={'coralillo': ['lua/*.lua']},
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
