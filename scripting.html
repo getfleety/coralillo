@@ -1,12 +1,11 @@
 
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Index &#8212; Coralillo 1.8.0 documentation</title>
+    <title>Lua scripting &#8212; Coralillo 1.8.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -22,8 +21,10 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="index" title="Index" href="#" />
+    <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Guardar objetos en distintos namespace" href="multi_tenancy.html" />
+    <link rel="prev" title="Flask Integration" href="flask_integration.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,75 +40,21 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
+  <div class="section" id="lua-scripting">
+<h1>Lua scripting<a class="headerlink" href="#lua-scripting" title="Permalink to this headline">¶</a></h1>
+<p>Coralillo uses a few lua scripts to atomically run certain operations. You can add your own scripts using Coralillo’s lua interface like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">coralillo</span> <span class="k">import</span> <span class="n">Engine</span>
 
-<h1 id="index">Index</h1>
+<span class="n">eng</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
 
-<div class="genindex-jumpbox">
- <a href="#_"><strong>_</strong></a>
- | <a href="#D"><strong>D</strong></a>
- | <a href="#F"><strong>F</strong></a>
- | <a href="#G"><strong>G</strong></a>
- | <a href="#K"><strong>K</strong></a>
- | <a href="#R"><strong>R</strong></a>
- | <a href="#S"><strong>S</strong></a>
- 
+<span class="n">script</span> <span class="o">=</span> <span class="s1">&#39;return ARGV[1]&#39;</span>
+
+<span class="n">eng</span><span class="o">.</span><span class="n">lua</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;my_script&#39;</span><span class="p">,</span> <span class="n">script</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">eng</span><span class="o">.</span><span class="n">lua</span><span class="o">.</span><span class="n">my_script</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;hello&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;hello&#39;</span>
+</pre></div>
 </div>
-<h2 id="_">_</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#__contains__">__contains__() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="D">D</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#delete">delete() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="F">F</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#fill">fill() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="G">G</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#get_related_ids">get_related_ids() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="K">K</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#key">key() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="R">R</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#relate">relate() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="S">S</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fields.html#save">save() (built-in function)</a>
-</li>
-  </ul></td>
-</tr></table>
-
+</div>
 
 
           </div>
@@ -125,11 +72,11 @@
 
 
 <h3>Navigation</h3>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="model_definition.html">Defining models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flask_integration.html">Flask Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scripting.html">Lua scripting</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multi_tenancy.html">Multi-tenancy</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lua scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_tenancy.html">Guardar objetos en distintos namespace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="atomic_operations.html">Atomic operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extending.html">Extending</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design_desitions.html">Design desitions</a></li>
@@ -139,6 +86,8 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="flask_integration.html" title="previous chapter">Flask Integration</a></li>
+      <li>Next: <a href="multi_tenancy.html" title="next chapter">Guardar objetos en distintos namespace</a></li>
   </ul></li>
 </ul>
 </div>
@@ -163,6 +112,9 @@
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
+      |
+      <a href="_sources/scripting.rst.txt"
+          rel="nofollow">Page source</a>
     </div>
 
     
