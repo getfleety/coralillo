@@ -8,13 +8,13 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='coralillo',
 
-    version='0.1.3',
+    version='0.2.0',
 
     description='A Redis Object Mapper',
     long_description="""Coralillo provides a familiar API to store your objects
     in a redis database.""",
 
-    url='https://github.com/categulario/coralillo',
+    url='https://categulario.github.io/coralillo/',
 
     author='Abraham Toriz Cruz',
     author_email='categulario@gmail.com',
