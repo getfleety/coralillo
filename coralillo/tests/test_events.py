@@ -21,59 +21,87 @@ class EventTestCase(unittest.TestCase):
 
     def test_create_sends_message(self):
         p = nrm.redis.pubsub(ignore_subscribe_messages=True)
-        p.subscribe('something')
+        p.psubscribe('something', 'something:*')
 
-        fence = Something(name='the fence', abbr='TFC').save()
+        thing = Something(name='the thing', abbr='TFC').save()
 
-        p.get_message()
-        message = p.get_message()
+        messages = p.listen()
 
+        message = next(messages)
         self.assertIsNotNone(message)
+        self.assertEqual(message['channel'], b'something')
         self.assertDictEqual(json.loads(message['data'].decode('utf8')), {
             'event': 'create',
-            'data': fence.to_json(),
+            'data': thing.to_json(),
+        })
+
+        message = next(messages)
+        self.assertIsNotNone(message)
+        self.assertEqual(message['channel'], thing.key().encode())
+        self.assertDictEqual(json.loads(message['data'].decode('utf8')), {
+            'event': 'create',
+            'data': thing.to_json(),
         })
 
         p.unsubscribe()
 
     def test_delete_sends_message(self):
-        fence = Something(name='the fence', abbr='TFC').save()
+        thing = Something(name='the thing', abbr='TFC').save()
 
         p = nrm.redis.pubsub(ignore_subscribe_messages=True)
-        p.subscribe('something')
+        p.psubscribe('something', 'something:*')
 
-        fence.delete()
+        thing.delete()
 
-        p.get_message()
-        message = p.get_message()
+        messages = p.listen()
 
+        message = next(messages)
         self.assertIsNotNone(message)
+        self.assertEqual(message['channel'], b'something')
         self.assertDictEqual(json.loads(message['data'].decode('utf8')), {
             'event': 'delete',
-            'data': fence.to_json(),
+            'data': thing.to_json(),
+        })
+
+        message = next(messages)
+        self.assertIsNotNone(message)
+        self.assertEqual(message['channel'], thing.key().encode())
+        self.assertDictEqual(json.loads(message['data'].decode('utf8')), {
+            'event': 'delete',
+            'data': thing.to_json(),
         })
 
         p.unsubscribe()
 
     def test_update_sends_message(self):
-        fence = Something(name='the fence', abbr='TFC').save()
+        thing = Something(name='the thing', abbr='TFC').save()
 
         p = nrm.redis.pubsub(ignore_subscribe_messages=True)
-        p.subscribe('something')
+        p.psubscribe('something', 'something:*')
 
-        fence.update(name='renamed fence')
+        thing.update(name='renamed thing')
 
-        p.get_message()
-        message = p.get_message()
+        messages = p.listen()
 
+        message = next(messages)
         self.assertIsNotNone(message)
+        self.assertEqual(message['channel'], b'something')
         data = json.loads(message['data'].decode('utf8'))
         self.assertDictEqual(data, {
             'event': 'update',
-            'data': fence.to_json(),
+            'data': thing.to_json(),
         })
 
-        self.assertEqual(data['data']['attributes']['name'], 'renamed fence')
+        message = next(messages)
+        self.assertIsNotNone(message)
+        self.assertEqual(message['channel'], thing.key().encode())
+        data = json.loads(message['data'].decode('utf8'))
+        self.assertDictEqual(data, {
+            'event': 'update',
+            'data': thing.to_json(),
+        })
+
+        self.assertEqual(data['data']['attributes']['name'], 'renamed thing')
 
         p.unsubscribe()
 

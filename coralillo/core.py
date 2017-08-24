@@ -140,10 +140,12 @@ class Model(Form):
         pipe.execute()
 
         if self.notify:
-            redis.publish(type(self).cls_key(), json.dumps({
+            data = json.dumps({
                 'event': 'create' if not self._persisted else 'update',
                 'data': self.to_json(),
-            }))
+            })
+            redis.publish(type(self).cls_key(), data)
+            redis.publish(self.key(), data)
 
         self._persisted = True
 
@@ -360,10 +362,12 @@ class Model(Form):
         redis.srem(type(self).members_key(), self.id)
 
         if self.notify:
-            redis.publish(type(self).cls_key(), json.dumps({
+            data = json.dumps({
                 'event': 'delete',
                 'data': self.to_json(),
-            }))
+            })
+            redis.publish(type(self).cls_key(), data)
+            redis.publish(self.key(), data)
 
         return self
 
