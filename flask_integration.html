@@ -44,6 +44,48 @@
 <h1>Flask Integration<a class="headerlink" href="#flask-integration" title="Permalink to this headline">¶</a></h1>
 <p>There is a module for that!</p>
 <p><code class="docutils literal"><span class="pre">$</span> <span class="pre">pip</span> <span class="pre">instal</span> <span class="pre">flask-coralillo</span></code></p>
+<p>The following example creates a simple flask application that creates and lists objects.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># app.py</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">redirect</span>
+<span class="kn">from</span> <span class="nn">flask_coralillo</span> <span class="kn">import</span> <span class="n">Coralillo</span>
+<span class="kn">from</span> <span class="nn">coralillo</span> <span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">fields</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">engine</span> <span class="o">=</span> <span class="n">Coralillo</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Car</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">engine</span>
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">list_cars</span><span class="p">():</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="s1">&#39;&lt;h1&gt;Cars&lt;/h1&gt;&lt;ul&gt;&#39;</span>
+
+    <span class="k">for</span> <span class="n">car</span> <span class="ow">in</span> <span class="n">Car</span><span class="o">.</span><span class="n">get_all</span><span class="p">():</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s1">&#39;&lt;li&gt;{}&lt;/li&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">car</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="n">res</span> <span class="o">+=</span> <span class="s1">&#39;&lt;/ul&gt;&lt;h3&gt;Add car&lt;/h3&gt;&#39;</span> <span class="o">+</span> \
+        <span class="s1">&#39;&lt;form method=&quot;POST&quot;&gt;&#39;</span> <span class="o">+</span> \
+        <span class="s1">&#39;&lt;input name=&quot;name&quot;&gt;&#39;</span> <span class="o">+</span> \
+        <span class="s1">&#39;&lt;input type=&quot;submit&quot; value=&quot;Add&quot;&gt;&#39;</span> <span class="o">+</span> \
+        <span class="s1">&#39;&lt;/form&gt;&#39;</span>
+
+    <span class="k">return</span> <span class="n">res</span>
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">add_car</span><span class="p">():</span>
+    <span class="n">newcar</span> <span class="o">=</span> <span class="n">Car</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="o">**</span><span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now if you run <code class="docutils literal"><span class="pre">python</span> <span class="pre">app.py</span></code> and you visit <code class="docutils literal"><span class="pre">http://localhost:5000</span></code> you will be able to intercact with your brand new Flask-Coralillo application.</p>
 </div>
 
 
