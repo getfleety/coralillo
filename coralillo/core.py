@@ -1,5 +1,4 @@
 from copy import copy
-from uuid import uuid1
 from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
@@ -109,9 +108,8 @@ class Model(Form):
 
     def __init__(self, id=None, **kwargs):
         super().__init__()
-        # Generate this object's id using a unique 128-bit
-        # check this to get the time of creation https://stackoverflow.com/questions/3795554/extract-the-time-from-a-uuid-v1-in-python
-        self.id = id if id else uuid1().hex
+        # Generate this object's id using the provided id function
+        self.id = id if id else self.get_engine().id_function()
         self._persisted = False
 
         for fieldname, field in self.proxy:

@@ -1,5 +1,6 @@
 from coralillo import Engine, Model, fields
 from coralillo.errors import UnboundModelError
+from random import choice
 import unittest
 
 
@@ -47,6 +48,31 @@ class EngineTestCase(unittest.TestCase):
 
         self.assertIsNotNone(eng.lua.my_script)
         self.assertEqual(eng.lua.my_script(args=[4]), b'4')
+
+    def test_can_replace_id_function(self):
+        def simple_ids():
+            return ''.join(choice('123456789abcdef') for c in range(11))
+
+        simple_eng = Engine(id_function=simple_ids)
+        uuid_eng = Engine()
+
+        class SimpleDog(Model):
+            name = fields.Text()
+
+            class Meta:
+                engine = simple_eng
+
+        class UuidDog(Model):
+            name = fields.Text()
+
+            class Meta:
+                engine = uuid_eng
+
+        simple_doggo = SimpleDog(name='doggo').save()
+        self.assertEqual(len(simple_doggo.id), 11)
+
+        uuid_doggo = UuidDog(name='doggo').save()
+        self.assertEqual(len(uuid_doggo.id), 32)
 
 
 if __name__ == '__main__':
