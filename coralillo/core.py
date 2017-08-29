@@ -216,6 +216,13 @@ class Model(Form):
 
         return obj
 
+    @classmethod
+    def count(cls):
+        ''' returns object count for this model '''
+        redis = cls.get_redis()
+
+        return redis.scard(cls.members_key())
+
     def reload(self):
         ''' reloads this object so if it was updated in the database it now
         contains the new values'''

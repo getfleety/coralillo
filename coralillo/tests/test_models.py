@@ -156,6 +156,16 @@ class ModelTestCase(unittest.TestCase):
         self.assertTrue(nrm.redis.exists('side_walk:members'))
         self.assertTrue(nrm.redis.exists('side_walk:{}:obj'.format(sw.id)))
 
+    def test_object_count(self):
+        sw1 = SideWalk(name='1').save()
+        self.assertEqual(SideWalk.count(), 1)
+
+        sw2 = SideWalk(name='2').save()
+        self.assertEqual(SideWalk.count(), 2)
+
+        sw1.delete()
+        self.assertEqual(SideWalk.count(), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
