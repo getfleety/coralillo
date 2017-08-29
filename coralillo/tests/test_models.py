@@ -30,6 +30,12 @@ class Pet(BoundedModel):
     class Meta:
         engine = nrm
 
+class SideWalk(Model):
+    name = fields.Text()
+
+    class Meta:
+        engine = nrm
+
 
 class ModelTestCase(unittest.TestCase):
 
@@ -143,6 +149,12 @@ class ModelTestCase(unittest.TestCase):
         ship = Ship(code='A12').save()
 
         self.assertEqual(ship.fqn(), 'ship:{}'.format(ship.id))
+
+    def test_model_table_conversion(self):
+        sw = SideWalk(name='foo').save()
+
+        self.assertTrue(nrm.redis.exists('side_walk:members'))
+        self.assertTrue(nrm.redis.exists('side_walk:{}:obj'.format(sw.id)))
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@ from copy import copy
 from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
-from coralillo.utils import to_pipeline
+from coralillo.utils import to_pipeline, snake_case
 from itertools import starmap
 import json
 import re
@@ -279,7 +279,8 @@ class Model(Form):
     @classmethod
     def cls_key(cls):
         ''' Returns the redis key prefix assigned to this model '''
-        return cls.__name__.lower()
+
+        return snake_case(cls.__name__)
 
     @classmethod
     def members_key(cls):
@@ -383,4 +384,4 @@ class BoundedModel(Model):
 
     @classmethod
     def cls_key(cls):
-        return cls.prefix() + ':' + cls.__name__.lower()
+        return cls.prefix() + ':' + snake_case(cls.__name__)
