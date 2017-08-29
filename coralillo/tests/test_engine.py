@@ -28,11 +28,11 @@ class EngineTestCase(unittest.TestCase):
         doggo = Dog(name='doggo').save()
         catto = Cat(name='catto').save()
 
-        self.assertTrue(eng1.redis.exists('dog:{}'.format(doggo.id)))
-        self.assertFalse(eng1.redis.exists('cat:{}'.format(catto.id)))
+        self.assertTrue(eng1.redis.exists('dog:{}:obj'.format(doggo.id)))
+        self.assertFalse(eng1.redis.exists('cat:{}:obj'.format(catto.id)))
 
-        self.assertTrue(eng2.redis.exists('cat:{}'.format(catto.id)))
-        self.assertFalse(eng2.redis.exists('dog:{}'.format(doggo.id)))
+        self.assertTrue(eng2.redis.exists('cat:{}:obj'.format(catto.id)))
+        self.assertFalse(eng2.redis.exists('dog:{}:obj'.format(doggo.id)))
 
     def test_unbound_models(self):
         class Dog(Model):

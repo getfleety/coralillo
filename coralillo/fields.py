@@ -377,7 +377,7 @@ class Dict(Field):
         return value
 
     def key(self):
-        return self.obj.key() + ':dict_' + self.name
+        return '{}:{}:dict_{}'.format(self.obj.cls_key(), self.obj.id, self.name)
 
 
 class Relation(Field):
@@ -544,7 +544,7 @@ class SetRelation(MultipleRelation):
         self.fillable  = False
 
     def key(self):
-        return self.obj.key() + ':srel_' + self.name
+        return '{}:{}:srel_{}'.format(self.obj.cls_key(), self.obj.id, self.name)
 
     def relate(self, obj, redis):
         redis.sadd(self.key(), obj.id)
@@ -580,7 +580,7 @@ class SortedSetRelation(MultipleRelation):
         self.fillable  = False
 
     def key(self):
-        return self.obj.key() + ':zrel_' + self.name
+        return '{}:{}:zrel_{}'.format(self.obj.cls_key(), self.obj.id, self.name)
 
     def relate(self, obj, redis):
         field = getattr(self.model(), self.sort_key) # the field in the foreign model

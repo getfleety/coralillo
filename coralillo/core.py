@@ -183,11 +183,9 @@ class Model(Form):
 
     @staticmethod
     def is_object_key(key):
-        ''' checks if the given redis key represents an object key, i.e. the
-        key of a hash that maps attributes to their values.
-        Currently this object keys are denoted by the ID of the object with an
-        optional prefix'''
-        return re.match('^[\w:]+:[a-f0-9]{32}$', key)
+        ''' checks if the given key belongs to an object. Its easy since it
+        depends on the key eding like: ':obj' '''
+        return re.match('^.*:obj$', key)
 
     @classmethod
     def get(cls, id):
@@ -197,7 +195,7 @@ class Model(Form):
             return None
 
         redis = cls.get_redis()
-        key = cls.cls_key() + ':' + id
+        key = '{}:{}:obj'.format(cls.cls_key(), id)
 
         if not redis.exists(key):
             return None
@@ -293,7 +291,7 @@ class Model(Form):
         ''' Returns the redis key to access this object's values '''
         prefix = type(self).cls_key()
 
-        return prefix + ':' + self.id
+        return '{}:{}:obj'.format(prefix, self.id)
 
     def permission(self, to=None):
         if to is None:

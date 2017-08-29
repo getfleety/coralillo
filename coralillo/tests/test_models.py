@@ -44,7 +44,7 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(user.name, 'John')
 
         self.assertTrue(nrm.redis.sismember('person:members', user.id))
-        self.assertEqual(nrm.redis.hget('person:{}'.format(user.id), 'name'), b'John')
+        self.assertEqual(nrm.redis.hget('person:{}:obj'.format(user.id), 'name'), b'John')
 
     def test_retrieve_user_by_id(self):
         carla = Person( name = 'Carla',).save()
@@ -109,8 +109,8 @@ class ModelTestCase(unittest.TestCase):
         ).save()
 
         self.assertFalse(nrm.redis.exists('pet:'+dev.id))
-        self.assertTrue(nrm.redis.exists('testing:pet:'+dev.id))
-        self.assertEqual(nrm.redis.hget('testing:pet:'+dev.id, 'name'), b'foo')
+        self.assertTrue(nrm.redis.exists('testing:pet:{}:obj'.format(dev.id)))
+        self.assertEqual(nrm.redis.hget('testing:pet:{}:obj'.format(dev.id), 'name'), b'foo')
         self.assertTrue(nrm.redis.sismember('testing:pet:members', dev.id))
 
     def test_delete(self):
@@ -133,6 +133,11 @@ class ModelTestCase(unittest.TestCase):
         ship.delete()
 
         self.assertFalse(nrm.redis.hexists('ship:index_code', 'A12'))
+
+    def test_is_object_key(self):
+        ship = Ship(code='A12').save()
+
+        self.assertTrue(Ship.is_object_key(ship.key()))
 
 
 if __name__ == '__main__':
