@@ -66,6 +66,10 @@ class PermissionTestCase(unittest.TestCase):
         self.assertFalse(self.user.is_allowed('org:fleet:somefleet:view'))
         self.assertTrue(self.user.is_allowed('org:fleet:somefleet', tail='view'))
 
+    def test_permission_key(self):
+        self.assertEqual(self.user.permission(), 'user:{}'.format(self.user.id))
+        self.assertEqual(self.user.permission(to='view'), 'user:{}:view'.format(self.user.id))
+
 
 if __name__ == '__main__':
     unittest.main()

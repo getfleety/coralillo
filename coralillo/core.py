@@ -301,9 +301,9 @@ class Model(Form):
 
     def permission(self, to=None):
         if to is None:
-            return self.key()
+            return self.fqn()
 
-        return self.key() + ':' + to
+        return self.fqn() + ':' + to
 
     def to_json(self, *, with_relations=True):
         ''' Serializes this model to a JSON representation so it can be sent
