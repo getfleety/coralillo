@@ -113,7 +113,7 @@ class FieldTestCase(unittest.TestCase):
 
         obj = MyModel(field = datamodel.Location(-103.3590, 20.7240)).save()
 
-        self.assertEqual(nrm.redis.type('mymodel:geo_field'), b'zset')
+        self.assertEqual(nrm.redis.type('my_model:geo_field'), b'zset')
         self.assertEqual(MyModel.get(obj.id).field, datamodel.Location(-103.3590, 20.7240))
 
     def test_password_check(self):
