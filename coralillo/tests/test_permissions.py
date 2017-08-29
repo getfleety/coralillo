@@ -21,6 +21,11 @@ class PermissionTestCase(unittest.TestCase):
         ).save()
         self.allow_key = self.user.allow_key()
 
+    def test_allow_key(self):
+        self.user.allow('a')
+
+        self.assertTrue(nrm.redis.exists('user:{}:allow'.format(self.user.id)))
+
     def test_add_permissions(self):
         self.user.allow('a:b:c')
         self.assertTrue(nrm.redis.sismember(self.allow_key, 'a:b:c'))

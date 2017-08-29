@@ -6,7 +6,7 @@ class PermissionHolder:
     def allow_key(self):
         ''' Gets the key associated with this user where we store permission
         information '''
-        return self.key() + ':allow'
+        return '{}:{}:allow'.format(self.cls_key(), self.id)
 
     def allow(self, objspec):
         engine = type(self).get_engine()
