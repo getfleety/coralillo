@@ -293,6 +293,12 @@ class Model(Form):
 
         return '{}:{}:obj'.format(prefix, self.id)
 
+    def fqn(self):
+        ''' Returns a fully qualified name for this object '''
+        prefix = type(self).cls_key()
+
+        return '{}:{}'.format(prefix, self.id)
+
     def permission(self, to=None):
         if to is None:
             return self.key()

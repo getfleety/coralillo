@@ -139,6 +139,11 @@ class ModelTestCase(unittest.TestCase):
 
         self.assertTrue(Ship.is_object_key(ship.key()))
 
+    def test_fqn(self):
+        ship = Ship(code='A12').save()
+
+        self.assertEqual(ship.fqn(), 'ship:{}'.format(ship.id))
+
 
 if __name__ == '__main__':
     unittest.main()
