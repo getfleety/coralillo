@@ -1,4 +1,4 @@
-from coralillo import Model, fields, Engine
+from coralillo import Model, BoundedModel, fields, Engine
 from coralillo.auth import PermissionHolder
 import unittest
 
@@ -10,6 +10,16 @@ class User(Model, PermissionHolder):
 
     class Meta:
         engine = nrm
+
+class Pet(BoundedModel):
+    name = fields.Text()
+
+    class Meta:
+        engine = nrm
+
+    @classmethod
+    def prefix(cls):
+        return 'bound'
 
 
 class PermissionTestCase(unittest.TestCase):
@@ -46,8 +56,8 @@ class PermissionTestCase(unittest.TestCase):
         self.assertFalse(nrm.redis.sismember(self.allow_key, 'foo:var:log'))
 
     def test_add_deletes_lower(self):
-        self.user.allow('a:b', restrict='v')
-        self.user.allow('a', restrict='v')
+        self.user.allow('a:b/v')
+        self.user.allow('a/v')
 
         self.assertSetEqual(self.user.get_perms(), set(['a/v']))
 
@@ -67,19 +77,45 @@ class PermissionTestCase(unittest.TestCase):
         self.assertFalse(self.user.is_allowed('a:d'))
 
     def test_can_carry_restrict(self):
-        self.user.allow('org:fleet', restrict='view')
+        self.user.allow('org:fleet/view')
 
-        self.assertTrue(self.user.is_allowed('org:fleet:somefleet', restrict='view'))
+        self.assertTrue(self.user.is_allowed('org:fleet:somefleet/view'))
 
     def test_permission_key(self):
         self.assertEqual(self.user.permission(), 'user:{}'.format(self.user.id))
-        self.assertEqual(self.user.permission(to='view'), 'user:{}:view'.format(self.user.id))
+        self.assertEqual(self.user.permission(restrict='view'), 'user:{}/view'.format(self.user.id))
 
     def test_minor_ignored_if_mayor(self):
-        self.user.allow('org:fleet', restrict='view')
-        self.user.allow('org:fleet:325234', restrict='view')
+        self.user.allow('org:fleet/view')
+        self.user.allow('org:fleet:325234/view')
 
         self.assertSetEqual(self.user.get_perms(), set(['org:fleet/view']))
+
+    def test_perm_framework_needs_strings(self):
+        with self.assertRaises(AssertionError):
+            self.user.allow(User)
+
+        with self.assertRaises(AssertionError):
+            self.user.is_allowed(User)
+
+        with self.assertRaises(AssertionError):
+            self.user.revoke(User)
+
+    def test_permission_function(self):
+        self.assertEqual(self.user.permission(), 'user:{}'.format(self.user.id))
+        self.assertEqual(self.user.permission('eat'), 'user:{}/eat'.format(self.user.id))
+
+        pet = Pet(name='doggo').save()
+        self.assertEqual(pet.permission(), 'bound:pet:{}'.format(pet.id))
+        self.assertEqual(pet.permission('walk'), 'bound:pet:{}/walk'.format(pet.id))
+
+    def test_delete_user_deletes_permission_bag(self):
+        self.user.allow('foo')
+
+        self.assertTrue(nrm.redis.exists('user:{}:allow'.format(self.user.id)))
+
+        self.user.delete()
+        self.assertFalse(nrm.redis.exists('user:{}:allow'.format(self.user.id)))
 
 
 if __name__ == '__main__':

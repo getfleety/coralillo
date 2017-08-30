@@ -3,6 +3,7 @@ from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelatio
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
 from coralillo.utils import to_pipeline, snake_case
+from coralillo.auth import PermissionHolder
 from itertools import starmap
 import json
 import re
@@ -307,11 +308,11 @@ class Model(Form):
 
         return '{}:{}'.format(prefix, self.id)
 
-    def permission(self, to=None):
-        if to is None:
+    def permission(self, restrict=None):
+        if restrict is None:
             return self.fqn()
 
-        return self.fqn() + ':' + to
+        return self.fqn() + '/' + restrict
 
     def to_json(self, *, with_relations=True):
         ''' Serializes this model to a JSON representation so it can be sent
@@ -370,6 +371,9 @@ class Model(Form):
 
         redis.delete(self.key())
         redis.srem(type(self).members_key(), self.id)
+
+        if isinstance(self, PermissionHolder):
+            redis.delete(self.allow_key())
 
         if self.notify:
             data = json.dumps({
