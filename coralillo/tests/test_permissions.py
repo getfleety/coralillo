@@ -45,6 +45,12 @@ class PermissionTestCase(unittest.TestCase):
         self.assertTrue(nrm.redis.sismember(self.allow_key, 'foo:var'))
         self.assertFalse(nrm.redis.sismember(self.allow_key, 'foo:var:log'))
 
+    def test_add_deletes_lower(self):
+        self.user.allow('a:b', restrict='v')
+        self.user.allow('a', restrict='v')
+
+        self.assertSetEqual(self.user.get_perms(), set(['a/v']))
+
     def test_revoke_permission(self):
         self.user.allow('a:b')
         self.user.revoke('a:b')
@@ -60,15 +66,20 @@ class PermissionTestCase(unittest.TestCase):
         self.assertFalse(self.user.is_allowed('a'))
         self.assertFalse(self.user.is_allowed('a:d'))
 
-    def test_can_carry_tail(self):
-        self.user.allow('org:fleet:view')
+    def test_can_carry_restrict(self):
+        self.user.allow('org:fleet', restrict='view')
 
-        self.assertFalse(self.user.is_allowed('org:fleet:somefleet:view'))
-        self.assertTrue(self.user.is_allowed('org:fleet:somefleet', tail='view'))
+        self.assertTrue(self.user.is_allowed('org:fleet:somefleet', restrict='view'))
 
     def test_permission_key(self):
         self.assertEqual(self.user.permission(), 'user:{}'.format(self.user.id))
         self.assertEqual(self.user.permission(to='view'), 'user:{}:view'.format(self.user.id))
+
+    def test_minor_ignored_if_mayor(self):
+        self.user.allow('org:fleet', restrict='view')
+        self.user.allow('org:fleet:325234', restrict='view')
+
+        self.assertSetEqual(self.user.get_perms(), set(['org:fleet/view']))
 
 
 if __name__ == '__main__':

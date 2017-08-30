@@ -1,6 +1,11 @@
 local allow_key = KEYS[1]
 
 local objspec = ARGV[1]
+local restrict = nil
+
+if ARGV[2] ~= 'None' then
+    restrict = ARGV[2]
+end
 
 local function split(thing)
     local pieces = {}
@@ -28,13 +33,17 @@ local function join_n(pieces, n)
     return res
 end
 
-local function has_higher_permission(objspec)
+local function has_higher_permission(objspec, restrict)
     local pieces = split(objspec)
 
     for i = #pieces,1,-1 do
         local node = join_n(pieces, i)
 
         if redis.call('SISMEMBER', allow_key, node) ~= 0 then
+            return 1
+        end
+
+        if restrict and redis.call('SISMEMBER', allow_key, node..'/'..restrict) ~= 0 then
             return 1
         end
     end
@@ -60,12 +69,20 @@ local function delete_lower_permissions(objspec)
     end
 end
 
-if has_higher_permission(objspec) == 1 then
-    return 0 -- already had permission for that, no permission added
+local function main()
+    if has_higher_permission(objspec, restrict) == 1 then
+        return 0 -- already had permission for that, no permission added
+    end
+
+    delete_lower_permissions(objspec)
+
+    if not restrict then
+        redis.call('SADD', allow_key, objspec)
+    else
+        redis.call('SADD', allow_key, objspec..'/'..restrict)
+    end
+
+    return 1
 end
 
-delete_lower_permissions(objspec)
-
-redis.call('SADD', allow_key, objspec)
-
-return 1
+return main()

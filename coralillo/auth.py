@@ -8,15 +8,15 @@ class PermissionHolder:
         information '''
         return '{}:{}:allow'.format(self.cls_key(), self.id)
 
-    def allow(self, objspec):
+    def allow(self, objspec, *, restrict=None):
         engine = type(self).get_engine()
 
-        return engine.lua.allow(keys=[self.allow_key()], args=[objspec])
+        return engine.lua.allow(keys=[self.allow_key()], args=[objspec, restrict])
 
-    def is_allowed(self, objspec, *, tail=None):
+    def is_allowed(self, objspec, *, restrict=None):
         engine = type(self).get_engine()
 
-        return engine.lua.is_allowed(keys=[self.allow_key()], args=[objspec, tail])
+        return engine.lua.is_allowed(keys=[self.allow_key()], args=[objspec, restrict])
 
     def revoke(self, objspec):
         engine = type(self).get_engine()
