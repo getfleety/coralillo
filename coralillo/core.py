@@ -248,8 +248,8 @@ class Model(Form):
 
     @classmethod
     def get_or_exception(cls, id):
-        ''' Tries to retrieve an instance of this model from the database and
-        raises a 404-compatible exception in case of failure '''
+        ''' Tries to retrieve an instance of this model from the database or
+        raises an exception in case of failure '''
         obj = cls.get(id)
 
         if obj is None:
@@ -270,6 +270,15 @@ class Model(Form):
             return cls.get(debyte_string(id))
 
         return None
+
+    @classmethod
+    def get_by_or_exception(cls, field, value):
+        obj = cls.get_by(field, value)
+
+        if obj is None:
+            raise ModelNotFoundError('This object does not exist in database')
+
+        return obj
 
     @classmethod
     def get_all(cls):

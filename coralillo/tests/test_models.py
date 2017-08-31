@@ -1,5 +1,6 @@
 from coralillo import datamodel, Engine, Model, BoundedModel, fields
 from coralillo.datamodel import debyte_string
+from coralillo.errors import ModelNotFoundError
 import unittest
 
 nrm = Engine()
@@ -165,6 +166,13 @@ class ModelTestCase(unittest.TestCase):
 
         sw1.delete()
         self.assertEqual(SideWalk.count(), 1)
+
+    def test_get_or_exception(self):
+        with self.assertRaises(ModelNotFoundError):
+            SideWalk.get_or_exception('nonsense')
+
+        with self.assertRaises(ModelNotFoundError):
+            Ship.get_by_or_exception('code', 'nonsense')
 
 
 if __name__ == '__main__':
