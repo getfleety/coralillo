@@ -484,7 +484,6 @@ class MultipleRelation(Relation):
         setattr(self.obj, self.name, value)
 
     def add(self, value):
-        key   = self.key()
         redis = type(self.obj).get_redis()
 
         self.relate(value, redis)
@@ -534,6 +533,17 @@ class MultipleRelation(Relation):
 
         redis.delete(key)
 
+    def remove(self, value):
+        redis = type(self.obj).get_redis()
+
+        self.unrelate(value, redis)
+
+        if self.inverse:
+            getattr(value.proxy, self.inverse).unrelate(self.obj, redis)
+
+    def count(self):
+        raise NotImplementedError('count is not implemented for this subclass of MultipleRelation')
+
 
 class SetRelation(MultipleRelation):
     ''' A relationship with another model '''
@@ -559,6 +569,12 @@ class SetRelation(MultipleRelation):
         key = self.key()
 
         return redis.smembers(key)
+
+    def count(self):
+        key   = self.key()
+        redis = type(self.obj).get_redis()
+
+        return redis.scard(key)
 
     def __contains__(self, item):
         if not isinstance(item, self.model()):
@@ -604,6 +620,12 @@ class SortedSetRelation(MultipleRelation):
             return redis.zrangebyscore(key, *score)
 
         return redis.zrange(key, 0, -1)
+
+    def count(self):
+        key   = self.key()
+        redis = type(self.obj).get_redis()
+
+        return redis.zcard(key)
 
     def __contains__(self, item):
         if not isinstance(item, self.model()):

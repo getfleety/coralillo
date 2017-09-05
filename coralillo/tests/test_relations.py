@@ -17,6 +17,8 @@ class RelationTestCase(unittest.TestCase):
         ).save()
         user.proxy.cars.set([org])
 
+        self.assertEqual(user.proxy.cars.count(), 1)
+
         self.assertEqual(user.cars[0].id, org.id)
         self.assertTrue(nrm.redis.sismember('driver:{}:srel_cars'.format(user.id), org.id))
 
@@ -139,6 +141,26 @@ class RelationTestCase(unittest.TestCase):
         self.assertTrue(type(owner.pets) == list)
         self.assertEqual(len(owner.pets), 1)
         self.assertEqual(owner.pets[0].id, pet.id)
+
+    def test_delete_relation(self):
+        c1 = Car().save()
+        c2 = Car().save()
+
+        d1 = Driver().save()
+
+        d1.proxy.cars.set([c1, c2])
+
+        self.assertTrue(c1 in d1.proxy.cars)
+        self.assertTrue(c2 in d1.proxy.cars)
+        self.assertTrue(d1 in c1.proxy.drivers)
+        self.assertTrue(d1 in c2.proxy.drivers)
+
+        d1.proxy.cars.remove(c1)
+
+        self.assertFalse(c1 in d1.proxy.cars)
+        self.assertTrue(c2 in d1.proxy.cars)
+        self.assertFalse(d1 in c1.proxy.drivers)
+        self.assertTrue(d1 in c2.proxy.drivers)
 
 
 if __name__ == '__main__':
