@@ -26,7 +26,7 @@ class RelationTestCase(unittest.TestCase):
         same.proxy.cars.fill()
 
         self.assertEqual(same.cars[0].id, org.id)
-        self.assertEqual(same.to_json()['relations']['cars'][0]['attributes']['name'], 'Testing Inc')
+        self.assertEqual(same.to_json()['cars'][0]['name'], 'Testing Inc')
 
     def test_delete_with_related(self):
         doggo = Pet(name='doggo').save()

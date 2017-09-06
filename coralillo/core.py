@@ -327,19 +327,20 @@ class Model(Form):
         ''' Serializes this model to a JSON representation so it can be sent
         via an HTTP REST API '''
         json = {
-            'type': type(self).cls_key(),
+            '_type': type(self).cls_key(),
             'id': self.id,
-            'attributes': dict(starmap(
-                lambda fn, f: (fn, f.to_json(getattr(self, fn))),
-                filter(
-                    lambda ft: not ft[1].private and not isinstance(ft[1], Relation),
-                    self.proxy
-                )
-            )),
         }
 
+        json.update(dict(starmap(
+            lambda fn, f: (fn, f.to_json(getattr(self, fn))),
+            filter(
+                lambda ft: not ft[1].private and not isinstance(ft[1], Relation),
+                self.proxy
+            )
+        )))
+
         if with_relations:
-            json['relations'] = dict(starmap(
+            json.update(dict(starmap(
                 lambda fn, f: (fn, list(map(
                     lambda m: m.to_json(with_relations=False),
                     getattr(self, fn)
@@ -348,17 +349,15 @@ class Model(Form):
                     lambda ft: isinstance(ft[1], MultipleRelation),
                     self.proxy
                 )
-            ))
+            )))
 
-            json['relations'].update(dict(starmap(
+            json.update(dict(starmap(
                 lambda fn, f: (fn, getattr(self, fn).to_json() if isinstance(getattr(self, fn), Model) else None),
                 filter(
                     lambda ft: isinstance(ft[1], ForeignIdRelation),
                     self.proxy
                 )
             )))
-        else:
-            json['relations'] = dict()
 
         return json
 

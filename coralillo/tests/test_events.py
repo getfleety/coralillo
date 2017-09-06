@@ -101,7 +101,7 @@ class EventTestCase(unittest.TestCase):
             'data': thing.to_json(),
         })
 
-        self.assertEqual(data['data']['attributes']['name'], 'renamed thing')
+        self.assertEqual(data['data']['name'], 'renamed thing')
 
         p.unsubscribe()
 
