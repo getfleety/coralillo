@@ -213,7 +213,7 @@ class Integer(Field):
         try:
             return int(value)
         except ValueError:
-            raise InvalidFieldError('Invalid number')
+            raise InvalidFieldError(self.name)
 
     def recover(self, data, redis=None):
         value = data.get(self.name)
@@ -237,7 +237,7 @@ class Float(Field):
         try:
             return float(value)
         except ValueError:
-            raise InvalidFieldError('Invalid number')
+            raise InvalidFieldError(self.name)
 
     def recover(self, data, redis=None):
         value = data.get(self.name)
@@ -270,7 +270,7 @@ class Datetime(Field):
             try:
                 value = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
             except ValueError:
-                raise InvalidFieldError('Invalid ISO format date')
+                raise InvalidFieldError(self.name)
 
         return value
 
