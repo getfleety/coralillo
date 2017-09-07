@@ -177,6 +177,17 @@ class RelationTestCase(unittest.TestCase):
 
         self.assertListEqual(orig, cars)
 
+    def test_get_foreignid_relation(self):
+        pet = Pet().save()
+        owner = Person().save()
+        owner.proxy.pets.add(pet)
+
+        self.assertEqual(pet.proxy.owner.get().id, owner.id)
+
+        owner.proxy.pets.remove(pet)
+
+        self.assertIsNone(pet.proxy.owner.get())
+
 
 if __name__ == '__main__':
     unittest.main()

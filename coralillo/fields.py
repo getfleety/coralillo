@@ -450,10 +450,13 @@ class ForeignIdRelation(Relation):
             getattr(item.proxy, self.inverse).unrelate(self.obj, redis)
 
     def fill(self):
+        setattr(self.obj, self.name, self.get())
+
+    def get(self):
         redis = type(self.obj).get_redis()
         value = debyte_string(redis.hget(self.obj.key(), self.name))
 
-        setattr(self.obj, self.name, self.model().get(value))
+        return self.model().get(value)
 
 
 class MultipleRelation(Relation):
