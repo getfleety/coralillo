@@ -328,7 +328,7 @@ class Model(Form):
         via an HTTP REST API '''
         json = {
             '_type': type(self).cls_key(),
-            '_id': self.id,
+            'id': self.id,
         }
 
         json.update(dict(starmap(
