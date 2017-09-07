@@ -508,13 +508,17 @@ class MultipleRelation(Relation):
     def fill(self, **kwargs):
         ''' Loads the relationships into this model. They are not loaded by
         default '''
+        setattr(self.obj, self.name, self.get(**kwargs))
+
+    def get(self, **kwargs):
+        ''' Returns this relation '''
         redis = type(self.obj).get_redis()
         related = list(map(
             lambda id : self.model().get(debyte_string(id)),
             self.get_related_ids(redis, **kwargs)
         ))
 
-        setattr(self.obj, self.name, related)
+        return related
 
     def delete(self, redis):
         key = self.key()

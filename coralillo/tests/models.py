@@ -36,3 +36,21 @@ class Car(Model):
 
     class Meta:
         engine = nrm
+
+
+class Employee(Model):
+    name = Text()
+    last_name = Text()
+    office = ForeignIdRelation('coralillo.tests.models.Office', inverse='employees')
+
+    class Meta:
+        engine = nrm
+
+
+class Office(Model):
+    name = Text()
+    address = Text()
+    employees = SetRelation(Employee, inverse='office')
+
+    class Meta:
+        engine = nrm

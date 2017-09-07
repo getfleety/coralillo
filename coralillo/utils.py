@@ -23,3 +23,23 @@ def camelCase(string):
     and returns its camel case version. It is used for key-to-model
     conversion. '''
     return ''.join(s[0].upper()+s[1:] for s in string.split('_'))
+
+def parse_embed(embed_array):
+    fields = {}
+
+    for item in embed_array:
+        pieces = item.split('.')
+
+        if pieces[0] not in fields:
+            fields[pieces[0]] = None
+
+        if len(pieces) == 2:
+            if fields[pieces[0]] is None:
+                fields[pieces[0]] = []
+
+            fields[pieces[0]].append(pieces[1])
+
+    return list(map(
+        lambda item: list(item),
+        fields.items()
+    ))

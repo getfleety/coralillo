@@ -2,7 +2,7 @@ from copy import copy
 from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
-from coralillo.utils import to_pipeline, snake_case
+from coralillo.utils import to_pipeline, snake_case, parse_embed
 from coralillo.auth import PermissionHolder
 from itertools import starmap
 import json
@@ -323,41 +323,45 @@ class Model(Form):
 
         return self.fqn() + '/' + restrict
 
-    def to_json(self, *, with_relations=False):
+    def to_json(self, *, fields=None, embed=None):
         ''' Serializes this model to a JSON representation so it can be sent
         via an HTTP REST API '''
-        json = {
-            '_type': type(self).cls_key(),
-            'id': self.id,
-        }
+        json = dict()
+
+        if fields is None or 'id' in fields:
+            json['id'] = self.id
+
+        if fields is None or '_type' in fields:
+            json['_type'] = type(self).cls_key()
+
+        def fieldfilter(fieldtuple):
+            return\
+                not fieldtuple[1].private and\
+                not isinstance(fieldtuple[1], Relation) and (
+                    fields is None or fieldtuple[0] in fields
+                )
 
         json.update(dict(starmap(
             lambda fn, f: (fn, f.to_json(getattr(self, fn))),
             filter(
-                lambda ft: not ft[1].private and not isinstance(ft[1], Relation),
+                fieldfilter,
                 self.proxy
             )
         )))
 
-        if with_relations:
-            json.update(dict(starmap(
-                lambda fn, f: (fn, list(map(
-                    lambda m: m.to_json(with_relations=False),
-                    getattr(self, fn)
-                ))),
-                filter(
-                    lambda ft: isinstance(ft[1], MultipleRelation),
-                    self.proxy
-                )
-            )))
+        if embed:
+            for requested_relation in parse_embed(embed):
+                relation_name, subfields = requested_relation
 
-            json.update(dict(starmap(
-                lambda fn, f: (fn, getattr(self, fn).to_json() if isinstance(getattr(self, fn), Model) else None),
-                filter(
-                    lambda ft: isinstance(ft[1], ForeignIdRelation),
-                    self.proxy
-                )
-            )))
+                if not hasattr(self.proxy, relation_name):
+                    continue
+
+                relation = getattr(self.proxy, relation_name)
+
+                if isinstance(relation, ForeignIdRelation):
+                    json[relation_name] = relation.get().to_json(fields=subfields)
+                elif isinstance(relation, MultipleRelation):
+                    json[relation_name] = list(map(lambda o: o.to_json(fields=subfields), relation.get()))
 
         return json
 
