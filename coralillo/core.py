@@ -323,7 +323,7 @@ class Model(Form):
 
         return self.fqn() + '/' + restrict
 
-    def to_json(self, *, with_relations=True):
+    def to_json(self, *, with_relations=False):
         ''' Serializes this model to a JSON representation so it can be sent
         via an HTTP REST API '''
         json = {
