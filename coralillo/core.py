@@ -359,7 +359,12 @@ class Model(Form):
                 relation = getattr(self.proxy, relation_name)
 
                 if isinstance(relation, ForeignIdRelation):
-                    json[relation_name] = relation.get().to_json(fields=subfields)
+                    item = relation.get()
+
+                    if item is not None:
+                        json[relation_name] = item.to_json(fields=subfields)
+                    else:
+                        json[relation_name] = None
                 elif isinstance(relation, MultipleRelation):
                     json[relation_name] = list(map(lambda o: o.to_json(fields=subfields), relation.get()))
 

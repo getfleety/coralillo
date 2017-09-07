@@ -65,3 +65,64 @@ class PresentationTestCase(unittest.TestCase):
             'employees': [employee.to_json(fields=['name', 'id'])],
             '_type': 'office',
         })
+
+    def test_embed_foreignid_relation(self):
+        office = Office(
+            name = 'Fleety',
+            address = 'Springfield 132',
+        ).save()
+        employee = Employee(
+            name = 'Juan',
+            last_name = 'Alduci',
+        ).save()
+        office.proxy.employees.set([employee])
+
+        self.assertDictEqual(employee.to_json(embed=['office']), {
+            'id': employee.id,
+            'name': employee.name,
+            'last_name': employee.last_name,
+            '_type': 'employee',
+            'office': office.to_json(),
+        })
+
+        self.assertDictEqual(employee.to_json(embed=['office.name']), {
+            'id': employee.id,
+            'name': employee.name,
+            'last_name': employee.last_name,
+            '_type': 'employee',
+            'office': office.to_json(fields=['name']),
+        })
+
+        self.assertDictEqual(employee.to_json(embed=['office.name', 'office.id']), {
+            'id': employee.id,
+            'name': employee.name,
+            'last_name': employee.last_name,
+            '_type': 'employee',
+            'office': office.to_json(fields=['name', 'id']),
+        })
+
+        office.proxy.employees.remove(employee)
+
+        self.assertDictEqual(employee.to_json(embed=['office']), {
+            'id': employee.id,
+            'name': employee.name,
+            'last_name': employee.last_name,
+            '_type': 'employee',
+            'office': None,
+        })
+
+        self.assertDictEqual(employee.to_json(embed=['office.name']), {
+            'id': employee.id,
+            'name': employee.name,
+            'last_name': employee.last_name,
+            '_type': 'employee',
+            'office': None,
+        })
+
+        self.assertDictEqual(employee.to_json(embed=['office.name', 'office.id']), {
+            'id': employee.id,
+            'name': employee.name,
+            'last_name': employee.last_name,
+            '_type': 'employee',
+            'office': None,
+        })
