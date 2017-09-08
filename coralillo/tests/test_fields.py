@@ -19,6 +19,13 @@ class User(Model):
         engine = nrm
 
 
+class Car(Model):
+    last_position = Location()
+
+    class Meta:
+        engine = nrm
+
+
 class FieldTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -181,6 +188,19 @@ class FieldTestCase(unittest.TestCase):
         self.assertDictEqual(a.dynamic, loaded_a.dynamic)
         self.assertDictEqual(b.dynamic, loaded_b.dynamic)
         self.assertDictEqual(c.dynamic, loaded_c.dynamic)
+
+    def test_field_position_delete(self):
+        c1 = Car(last_position=datamodel.Location(-90, 21)).save()
+        c2 = Car(last_position=datamodel.Location(-90, 22)).save()
+
+        self.assertEqual(Car.get(c1.id).last_position, datamodel.Location(-90, 21))
+        self.assertEqual(Car.get(c2.id).last_position, datamodel.Location(-90, 22))
+
+        c1.delete()
+
+        self.assertIsNone(Car.get(c1.id))
+
+        self.assertEqual(Car.get(c2.id).last_position, datamodel.Location(-90, 22))
 
 
 if __name__ == '__main__':

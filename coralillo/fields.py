@@ -312,7 +312,7 @@ class Location(Field):
     def delete(self, redis):
         key = self.key()
 
-        redis.delete(key)
+        redis.zrem(key, self.obj.id)
 
     def to_json(self, value):
         if value is None:
