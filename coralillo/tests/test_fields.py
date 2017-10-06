@@ -134,6 +134,32 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(nrm.redis.type('my_model:geo_field'), b'zset')
         self.assertEqual(MyModel.get(obj.id).field, datamodel.Location(-103.3590, 20.7240))
 
+    def test_field_location_validate(self):
+        class MyModel(Model):
+            field = Location()
+
+            class Meta:
+                engine = nrm
+
+        item = MyModel.validate(field='-100,20').save()
+        self.assertEqual(item.field, datamodel.Location(-100, 20))
+
+        item_rec = MyModel.get(item.id)
+        self.assertEqual(item_rec.field, datamodel.Location(-100, 20))
+
+    def test_field_location_none(self):
+        class MyModel(Model):
+            field = Location(required=False)
+
+            class Meta:
+                engine = nrm
+
+        item = MyModel.validate().save()
+
+        item_rec = MyModel.get(item.id)
+
+        self.assertIsNone(item_rec.field)
+
     def test_password_check(self):
         user = User(
             password  = self.pwd,

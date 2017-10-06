@@ -339,6 +339,24 @@ class Location(Field):
 
         return datamodel.Location(*value[0])
 
+    def validate(self, value, redis):
+        value = self.value_or_default(value)
+
+        self.validate_required(value)
+
+        if value is None:
+            return None
+
+        try:
+            lon, lat = map(float, value.split(','))
+
+            assert -180 < lon < 180
+            assert -90 < lat < 90
+
+            return datamodel.Location(lon, lat)
+        except:
+            raise InvalidFieldError(self.name)
+
     def key(self):
         return self.obj.cls_key() + ':geo_' + self.name
 
