@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 setup(
     name='coralillo',
 
-    version='0.6.3',
+    version='0.6.4',
 
     description='An Object-Redis Mapping',
     long_description="""Coralillo provides a familiar API to store your objects
