@@ -3,54 +3,39 @@ from coralillo.fields import Text, SetRelation, ForeignIdRelation
 
 nrm = Engine()
 
+class TestModel(Model):
+    class Meta:
+        engine = nrm
 
 # For one-many relations
-class Pet(Model):
+class Pet(TestModel):
     name = Text()
     owner = ForeignIdRelation('coralillo.tests.models.Person', inverse='pets')
 
-    class Meta:
-        engine = nrm
 
-
-class Person(Model):
+class Person(TestModel):
     name = Text()
     pets = SetRelation(Pet, on_delete='cascade', inverse='owner')
 
-    class Meta:
-        engine = nrm
-
 
 # For many to many relations
-class Driver(Model):
+class Driver(TestModel):
     name = Text()
     cars = SetRelation('coralillo.tests.models.Car', inverse='drivers')
 
-    class Meta:
-        engine = nrm
 
-
-class Car(Model):
+class Car(TestModel):
     name = Text()
     drivers = SetRelation(Driver, inverse='cars')
 
-    class Meta:
-        engine = nrm
 
-
-class Employee(Model):
+class Employee(TestModel):
     name = Text()
     last_name = Text()
     office = ForeignIdRelation('coralillo.tests.models.Office', inverse='employees')
 
-    class Meta:
-        engine = nrm
 
-
-class Office(Model):
+class Office(TestModel):
     name = Text()
     address = Text()
     employees = SetRelation(Employee, inverse='office')
-
-    class Meta:
-        engine = nrm
