@@ -174,6 +174,13 @@ class ModelTestCase(unittest.TestCase):
         with self.assertRaises(ModelNotFoundError):
             Ship.get_by_or_exception('code', 'nonsense')
 
+    def test_recover_none_int(self):
+        h = House.validate()
+        h.save()
+
+        h_rec = House.get(h.id)
+        self.assertIsNone(h.number)
+
 
 if __name__ == '__main__':
     unittest.main()

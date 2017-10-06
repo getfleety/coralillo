@@ -40,6 +40,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.validate(None, 'field'), 'pollo')
         self.assertEqual(field.recover({'field': ''}, 'field'), '')
         self.assertEqual(field.recover({'field': None}, 'field'), None)
+        self.assertEqual(field.recover({'field': 'None'}, 'field'), None)
 
     def test_field_text_validate(self):
         field = Text(name='field')
@@ -53,6 +54,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.recover({'field': 'foo'}, 'field'), 'foo')
         self.assertNotEqual(field.validate('foo', 'field'), 'foo')
         self.assertEqual(field.recover({'field': None}, 'field'), None)
+        self.assertEqual(field.recover({'field': 'None'}, 'field'), None)
 
     def test_field_bool(self):
         field = Bool(name='field')
@@ -62,6 +64,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.prepare(True), 'True')
         self.assertEqual(field.prepare(False), 'False')
         self.assertEqual(field.recover({'field': None}, 'field'), None)
+        self.assertEqual(field.recover({'field': 'None'}, 'field'), None)
 
         self.assertEqual(field.validate('true', 'field'), True)
         self.assertEqual(field.validate('false', 'field'), False)
@@ -76,6 +79,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.recover({'field': '0'}, 'field'), 0)
         self.assertEqual(field.recover({'field': ''}, 'field'), None)
         self.assertEqual(field.recover({'field': None}, 'field'), None)
+        self.assertEqual(field.recover({'field': 'None'}, 'field'), None)
 
         self.assertEqual(field.prepare(35), '35')
         self.assertEqual(field.prepare(0), '0')
@@ -89,6 +93,11 @@ class FieldTestCase(unittest.TestCase):
         with self.assertRaises(InvalidFieldError):
             field.validate('pollo', 'field')
 
+    def test_field_int_no_required(self):
+        field = Integer(name='field', required=False)
+
+        self.assertEqual(field.validate(None, 'field'), None)
+
     def test_field_float(self):
         field = Float(name='field')
 
@@ -96,6 +105,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.recover({'field': '0'}, 'field'), 0.0)
         self.assertEqual(field.recover({'field': ''}, 'field'), None)
         self.assertEqual(field.recover({'field': None}, 'field'), None)
+        self.assertEqual(field.recover({'field': 'None'}, 'field'), None)
 
         self.assertEqual(field.prepare(3.14), '3.14')
         self.assertEqual(field.prepare(0.0), '0.0')
@@ -109,6 +119,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual(field.recover({'field': '1499794899'}, 'field'), datetime(2017, 7, 11, 17, 41, 39))
         self.assertEqual(field.recover({'field': ''}, 'field'), None)
         self.assertEqual(field.recover({'field': None}, 'field'), None)
+        self.assertEqual(field.recover({'field': 'None'}, 'field'), None)
         self.assertEqual(field.prepare(datetime(2017, 7, 11, 17, 41, 39)), '1499794899')
 
     def test_field_location(self):

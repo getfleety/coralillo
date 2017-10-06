@@ -64,7 +64,7 @@ class Field:
         ''' Retrieve this field's value from the database '''
         value = data.get(self.name)
 
-        if value is None:
+        if value is None or value == 'None':
             return None
 
         return str(value)
@@ -196,7 +196,7 @@ class Bool(Field):
     def recover(self, data, redis=None):
         value = data.get(self.name)
 
-        if value is None:
+        if value is None or value == 'None':
             return None
 
         return value in ['True', 'true', '1', 1]
@@ -210,6 +210,9 @@ class Integer(Field):
 
         self.validate_required(value)
 
+        if value is None:
+            return None
+
         try:
             return int(value)
         except ValueError:
@@ -218,7 +221,7 @@ class Integer(Field):
     def recover(self, data, redis=None):
         value = data.get(self.name)
 
-        if value == '' or value is None:
+        if value == '' or value is None or value == 'None':
             return None
 
         return int(value)
@@ -242,7 +245,7 @@ class Float(Field):
     def recover(self, data, redis=None):
         value = data.get(self.name)
 
-        if value == '' or value is None:
+        if value == '' or value is None or value == 'None':
             return None
 
         return float(value)
@@ -277,7 +280,7 @@ class Datetime(Field):
     def recover(self, data, redis=None):
         value = data.get(self.name)
 
-        if not value:
+        if not value or value == 'None':
             return None
 
         return datetime.datetime.utcfromtimestamp(int(value))
