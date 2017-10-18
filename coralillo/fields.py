@@ -12,7 +12,7 @@ class Field:
     ''' Defines a field of a model. Represents how to store this specific
     datatype in the redis database '''
 
-    def __init__(self, *, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, fillable=True):
+    def __init__(self, *, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, allowed=None, fillable=True):
         # This field's value is mapped to the ID in a redis hash so you can Model.get_by(field, value)
         self.index     = index     
 
@@ -29,7 +29,10 @@ class Field:
         self.regex     = regex     
 
         # A set of forbidden values for this field
-        self.forbidden = forbidden 
+        self.forbidden = forbidden
+
+        # The set of only allowed valies for this field
+        self.allowed = allowed
 
         # This field can't be set via http
         self.fillable  = fillable  
@@ -121,6 +124,9 @@ class Field:
 
         if self.forbidden and value in self.forbidden:
             raise ReservedFieldError(self.name)
+
+        if self.allowed and value not in self.allowed:
+            raise InvalidFieldError(self.name)
 
         if self.index:
             key = self.key()
