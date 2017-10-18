@@ -1,6 +1,6 @@
 # Coralillo
 
-A redis ORM
+A redis ORM. This project is in active development, if you think it is useful contact me so we can talk about its usage, features and future of the project.
 
 ## Installation
 
