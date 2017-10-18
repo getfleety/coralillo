@@ -6,6 +6,7 @@ from importlib import import_module
 from .utils import to_pipeline
 import re
 import datetime
+import json
 
 
 class Field:
@@ -397,6 +398,17 @@ class Location(Field):
 
 class Dict(Field):
     ''' A dict that can be used transparently as such in the model '''
+
+    def validate(self, value, redis):
+        if not value:
+            return dict()
+
+        try:
+            value = json.loads(value)
+        except json.decoder.JSONDecodeError as e:
+            raise InvalidFieldError(self.name)
+
+        return value
 
     def prepare(self, value):
         return value
