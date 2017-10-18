@@ -12,18 +12,21 @@ os.environ['TZ'] = 'UTC'
 time.tzset()
 
 
-class User(Model):
+class BaseModel(Model):
+    class Meta:
+        engine = nrm
+
+
+class User(BaseModel):
     password = Hash()
 
-    class Meta:
-        engine = nrm
 
-
-class Car(Model):
+class Car(BaseModel):
     last_position = Location()
 
-    class Meta:
-        engine = nrm
+
+class Subscription(BaseModel):
+    key_name = TreeIndex()
 
 
 class FieldTestCase(unittest.TestCase):
@@ -238,6 +241,23 @@ class FieldTestCase(unittest.TestCase):
         self.assertIsNone(Car.get(c1.id))
 
         self.assertEqual(Car.get(c2.id).last_position, datamodel.Location(-90, 22))
+
+    def test_tree_index(self):
+        s4 = Subscription(key_name='a:b:c:d').save()
+        s1 = Subscription(key_name='a:b:c').save()
+        s2 = Subscription(key_name='a:b').save()
+        s3 = Subscription(key_name='a').save()
+
+        self.assertListEqual(Subscription.tree_match('key_name', 'a:b:c'), [s1, s2, s3])
+
+        s3.delete()
+        self.assertListEqual(Subscription.tree_match('key_name', 'a:b:c'), [s1, s2])
+
+        s2.delete()
+        self.assertListEqual(Subscription.tree_match('key_name', 'a:b:c'), [s1])
+
+        s1.delete()
+        self.assertListEqual(Subscription.tree_match('key_name', 'a:b:c'), [])
 
 
 if __name__ == '__main__':

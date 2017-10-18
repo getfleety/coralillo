@@ -143,6 +143,34 @@ class Text(Field):
     pass
 
 
+class TreeIndex(Field):
+
+    def save(self, value, redis, *, commit=True):
+        ''' Sets this fields value in the databse '''
+        value = self.prepare(value)
+
+        if value is not None:
+            redis.hset(self.obj.key(), self.name, value)
+        else:
+            redis.hdel(self.obj.key(), self.name)
+
+        key = self.key()
+
+        if self.name in self.obj._old:
+            redis.hdel(key, self.obj._old[self.name])
+
+        redis.sadd(key + ':' + value, self.obj.id)
+
+    def delete(self, redis):
+        ''' Deletes this field's value from the databse. Should be implemented
+        in special cases '''
+        value = getattr(self.obj, self.name)
+        redis.srem(self.key() + ':' + value, self.obj.id)
+
+    def key(self):
+        return self.obj.cls_key() + ':tree_' + self.name
+
+
 class Hash(Text):
     ''' A value that should be stored as a hash, for example a password '''
 

@@ -287,11 +287,37 @@ class Model(Form):
 
         return list(map(
             lambda id: cls.get(id),
-            list(map(
+            map(
                 debyte_string,
                 redis.smembers(cls.members_key())
-            ))
+            )
         ))
+
+    @classmethod
+    def tree_match(cls, field, string):
+        ''' Given a tree index, retrieves the ids atached to the given prefix,
+        think of if as a mechanism for pattern suscription, where two models
+        attached to the `a`, `a:b` respectively are found by the `a:b` string,
+        because both model's subscription key matches the string. '''
+        if not string:
+            return set()
+
+        redis = cls.get_redis()
+        prefix = '{}:tree_{}'.format(cls.cls_key(), field)
+        pieces = string.split(':')
+
+        ans =  redis.sunion(
+            prefix + ':' + ':'.join(pieces[0:i+1])
+            for i in range(len(pieces))
+        )
+
+        return sorted(map(
+            lambda id: cls.get(id),
+            map(
+                debyte_string,
+                ans
+            )
+        ), key=lambda x:x.id)
 
     @classmethod
     def cls_key(cls):
