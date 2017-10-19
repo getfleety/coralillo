@@ -34,6 +34,19 @@ class EngineTestCase(unittest.TestCase):
         self.assertTrue(eng2.redis.exists('cat:{}:obj'.format(catto.id)))
         self.assertFalse(eng2.redis.exists('dog:{}:obj'.format(doggo.id)))
 
+    def test_set_engine_delayed(self):
+        class Foo(Model):
+            name = fields.Text()
+
+        with self.assertRaises(UnboundModelError):
+            Foo.get_engine()
+
+        eng = Engine()
+
+        Foo.set_engine(eng)
+
+        self.assertIsNone(Foo.get('de')) # Only possible if bound to engine
+
     def test_unbound_models(self):
         class Dog(Model):
             name = fields.Text()

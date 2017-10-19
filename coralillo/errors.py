@@ -27,23 +27,27 @@ class ValidationErrors(Exception):
 
 class BadField(Exception):
 
-    message = '{} is invalid'
+    message = '{field} is invalid'
     errorcode = 'invalid'
 
-    def __init__(self, fieldname):
-        assert type(fieldname) == str
+    def __init__(self, field='', value=''):
+        assert type(field) == str, 'Field must be string'
 
-        self.fieldname = fieldname
+        self.field = field
+        self.value = value
 
     def get_detail(self):
-        return self.message.format(field=self.fieldname)
+        return self.message.format(
+            field = self.field,
+            value = self.value,
+        )
 
     def to_json(self):
         return {
             'detail': self.get_detail(),
-            'field': self.fieldname,
+            'field': self.field,
             'i18n': 'errors.{field}.{error}'.format(
-                field = self.fieldname,
+                field = self.field,
                 error = self.errorcode,
             ),
         }

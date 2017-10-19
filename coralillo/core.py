@@ -4,6 +4,7 @@ from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
 from coralillo.utils import to_pipeline, snake_case, parse_embed
 from coralillo.auth import PermissionHolder
+from coralillo import Engine
 from itertools import starmap
 import json
 import re
@@ -94,6 +95,18 @@ class Form:
             return cls.Meta.engine
         except AttributeError:
             raise UnboundModelError('The model {} is not bound to any engine'.format(cls))
+
+    @classmethod
+    def set_engine(cls, neweng):
+        assert isinstance(neweng, Engine), 'Provided object must be of class Engine'
+
+        if hasattr(cls, 'Meta'):
+            cls.Meta.engine = neweng
+        else:
+            class Meta:
+                engine = neweng
+
+            cls.Meta = Meta
 
     @classmethod
     def get_redis(cls):
