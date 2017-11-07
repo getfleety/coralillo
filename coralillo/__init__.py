@@ -13,7 +13,7 @@ class Engine:
         try:
             url = kwargs.pop('url')
 
-            self.redis = redis.StrictRedis.from_url(url)
+            self.redis = redis.StrictRedis.from_url(url, **kwargs)
         except:
             self.redis = redis.StrictRedis(**kwargs)
 
