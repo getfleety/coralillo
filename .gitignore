@@ -3,6 +3,7 @@
 build/
 dist/
 _build
+_modules/
 .python-version
 .cache
 .eggs
