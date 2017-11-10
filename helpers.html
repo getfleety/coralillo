@@ -42,6 +42,29 @@
   <div class="section" id="helpers">
 <h1>Helpers<a class="headerlink" href="#helpers" title="Permalink to this headline">¶</a></h1>
 <p>Currentry three helpers exist:</p>
+<dl class="function">
+<dt id="coralillo.utils.to_pipeline">
+<code class="descclassname">coralillo.utils.</code><code class="descname">to_pipeline</code><span class="sig-paren">(</span><em>redis</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/utils.html#to_pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.utils.to_pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the argument is a redis connection this function makes a redis
+pipeline from it. Otherwise it returns the object passed, so it ensures
+it is a pipeline</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="coralillo.utils.snake_case">
+<code class="descclassname">coralillo.utils.</code><code class="descname">snake_case</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/utils.html#snake_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.utils.snake_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a string that represents for example a class name and returns
+the snake case version of it. It is used for model-to-key conversion</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="coralillo.utils.camelCase">
+<code class="descclassname">coralillo.utils.</code><code class="descname">camelCase</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/utils.html#camelCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.utils.camelCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a string that represents the redis key version of a model name
+and returns its camel case version. It is used for key-to-model
+conversion.</p>
+</dd></dl>
+
 </div>
 
 
@@ -75,9 +98,9 @@
 
 <h3>Useful links</h3>
 <ul>
-    <li><a href="https://github.com/categulario/coralillo">Github</a></li>
+    <li><a href="https://github.com/getfleety/coralillo">Github</a></li>
     <li><a href="https://pypi.python.org/pypi/coralillo/">PyPi</a></li>
-    <li><a href="https://github.com/categulario/coralillo/issues">Issues</a></li>
+    <li><a href="https://github.com/getfleety/coralillo/issues">Issues</a></li>
 </ul><div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -104,7 +127,7 @@
       &copy;2017, Abraham Toriz Cruz.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
