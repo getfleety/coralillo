@@ -9,7 +9,7 @@ These are all the fields available right now:
 * ``Integer`` for ints
 * ``Float`` for floating point numbers
 * ``Datetime`` for timestamps
-* ``Location`` for gps positions
+* ``Location`` for gps positions (Requires redis-py >= 2.10.6)
 * ``Dict`` for key-value pairs
 
 Relationships
