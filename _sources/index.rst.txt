@@ -60,6 +60,7 @@ Learn More
    atomic_operations
    extending
    design_desitions
+   helpers
 
 Indices and tables
 ------------------

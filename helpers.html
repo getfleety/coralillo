@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Defining models &#8212; Coralillo 1.8.0 documentation</title>
+    <title>Helpers &#8212; Coralillo 1.8.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,8 +23,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Flask Integration" href="flask_integration.html" />
-    <link rel="prev" title="Coralillo" href="index.html" />
+    <link rel="prev" title="Design desitions" href="design_desitions.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -40,28 +39,9 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="defining-models">
-<h1>Defining models<a class="headerlink" href="#defining-models" title="Permalink to this headline">¶</a></h1>
-<p>These are all the fields available right now:</p>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">Text</span></code> for strings of any size</li>
-<li><code class="docutils literal"><span class="pre">Hash</span></code> for passwords</li>
-<li><code class="docutils literal"><span class="pre">Bool</span></code> for boolean values</li>
-<li><code class="docutils literal"><span class="pre">Integer</span></code> for ints</li>
-<li><code class="docutils literal"><span class="pre">Float</span></code> for floating point numbers</li>
-<li><code class="docutils literal"><span class="pre">Datetime</span></code> for timestamps</li>
-<li><code class="docutils literal"><span class="pre">Location</span></code> for gps positions (Requires redis-py &gt;= 2.10.6)</li>
-<li><code class="docutils literal"><span class="pre">Dict</span></code> for key-value pairs</li>
-</ul>
-<div class="section" id="relationships">
-<h2>Relationships<a class="headerlink" href="#relationships" title="Permalink to this headline">¶</a></h2>
-<p>You can also define relationships between models the same way you do in relational databases using the following fields:</p>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">ForeignIdRelation</span></code> says that this models is related to only one of the other</li>
-<li><code class="docutils literal"><span class="pre">SetRelation</span></code> states that this model ows or is related to many of the other</li>
-<li><code class="docutils literal"><span class="pre">SortedSetRelation</span></code> is a special case of the set relation in which you want the related objects sorteed by the specified key</li>
-</ul>
-</div>
+  <div class="section" id="helpers">
+<h1>Helpers<a class="headerlink" href="#helpers" title="Permalink to this headline">¶</a></h1>
+<p>Currentry three helpers exist:</p>
 </div>
 
 
@@ -83,17 +63,14 @@
 
 <h3>Navigation</h3>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Defining models</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#relationships">Relationships</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="model_definition.html">Defining models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flask_integration.html">Flask Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripting.html">Lua scripting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_tenancy.html">Multi-tenancy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="atomic_operations.html">Atomic operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extending.html">Extending</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design_desitions.html">Design desitions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="helpers.html">Helpers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Helpers</a></li>
 </ul>
 
 <h3>Useful links</h3>
@@ -105,8 +82,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Coralillo</a></li>
-      <li>Next: <a href="flask_integration.html" title="next chapter">Flask Integration</a></li>
+      <li>Previous: <a href="design_desitions.html" title="previous chapter">Design desitions</a></li>
   </ul></li>
 </ul>
 </div>
@@ -132,7 +108,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
-      <a href="_sources/model_definition.rst.txt"
+      <a href="_sources/helpers.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
