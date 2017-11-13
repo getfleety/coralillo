@@ -245,7 +245,7 @@ class Integer(Field):
 
         self.validate_required(value)
 
-        if value is None:
+        if value != 0 and not value:
             return None
 
         try:

@@ -100,6 +100,7 @@ class FieldTestCase(unittest.TestCase):
         field = Integer(name='field', required=False)
 
         self.assertEqual(field.validate(None, 'field'), None)
+        self.assertEqual(field.validate('', 'field'), None)
 
     def test_field_float(self):
         field = Float(name='field')
