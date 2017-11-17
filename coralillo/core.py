@@ -412,6 +412,9 @@ class Model(Form):
     def __eq__(self, other):
         ''' Compares this object to another. Returns true if both are of the
         same class and have the same properties. Returns false otherwise '''
+        if type(other) == str:
+            return self.id == other
+
         if type(self) != type(other):
             return False
 
