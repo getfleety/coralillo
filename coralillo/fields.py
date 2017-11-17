@@ -473,6 +473,17 @@ class ForeignIdRelation(Relation):
         super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
         self.default   = None
 
+    def validate(self, value, redis):
+        if value is None:
+            return None
+
+        related_obj = self.model().get(value)
+
+        if related_obj is None:
+            raise InvalidFieldError(self.name)
+
+        return related_obj
+
     def relate(self, obj, pipeline):
         pipeline.hset(self.obj.key(), self.name, obj.id)
 
