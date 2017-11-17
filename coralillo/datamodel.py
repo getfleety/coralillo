@@ -1,3 +1,5 @@
+from math import radians, sin, cos, asin, sqrt
+
 EPSILON = 0.00001
 
 def debyte_string(byte_string):
@@ -33,6 +35,29 @@ class Location:
     def __init__(self, lon, lat):
         self.lon = lon
         self.lat = lat
+
+    def distance(self, loc):
+        """
+        Calculate the great circle distance between two points
+        on the earth (specified in decimal degrees)
+        """
+        assert type(loc) == type(self)
+
+        # convert decimal degrees to radians
+        lon1, lat1, lon2, lat2 = map(radians, [
+            self.lon,
+            self.lat,
+            loc.lon,
+            loc.lat,
+        ])
+
+        # haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        r = 6371000 # Radius of earth in meters.
+        return c * r
 
     def to_json(self):
         return {

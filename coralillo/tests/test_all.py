@@ -6,6 +6,7 @@ from coralillo.tests.test_permissions import PermissionTestCase
 from coralillo.tests.test_relations import RelationTestCase
 from coralillo.tests.test_presentation import PresentationTestCase
 from coralillo.tests.test_utils import UtilsTestCase
+from coralillo.tests.test_datamodel import DatamodelTestCase
 import unittest
 
 
