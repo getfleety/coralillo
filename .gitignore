@@ -1,3 +1,5 @@
 env
 docs/
 coralillo/
+dist/
+coralillo.egg-info/
