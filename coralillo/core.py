@@ -57,11 +57,14 @@ class Form:
 
     @classmethod
     def validate(cls, **kwargs):
-        # catch possible errors
+        # errors can store multiple errors
+        # obj is an instance in case validation succeeds
+        # redis is needed for database validation
         errors = ValidationErrors()
         obj = cls()
         redis = cls.get_redis()
 
+        # Check the fields
         for fieldname, field in obj.proxy:
             if not field.fillable:
                 value = field.default
@@ -78,9 +81,21 @@ class Form:
                 value
             )
 
+        # Check for custom validation rules
+        for fieldname in dir(cls):
+            rule = getattr(cls, fieldname)
+
+            if hasattr(rule, '_is_validation_rule') and rule._is_validation_rule:
+                try:
+                    rule(obj)
+                except BadField as e:
+                    errors.append(e)
+
+        # Trigger errors if any
         if errors.has_errors():
             raise errors
 
+        # Return the object with the new data set
         return obj
 
     def __str__(self):

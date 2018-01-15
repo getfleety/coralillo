@@ -7,6 +7,7 @@ from coralillo.tests.test_relations import RelationTestCase
 from coralillo.tests.test_presentation import PresentationTestCase
 from coralillo.tests.test_utils import UtilsTestCase
 from coralillo.tests.test_datamodel import DatamodelTestCase
+from coralillo.tests.test_validation import ValidationTestCase
 import unittest
 
 
