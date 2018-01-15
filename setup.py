@@ -15,7 +15,7 @@ setup(
     long_description="""Coralillo provides a familiar API to store your objects
     in a redis database.""",
 
-    url='https://categulario.github.io/coralillo/',
+    url='https://getfleety.github.io/coralillo/',
 
     author='Abraham Toriz Cruz',
     author_email='categulario@gmail.com',
