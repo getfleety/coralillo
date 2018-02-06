@@ -3,6 +3,8 @@ from coralillo import Model, Form, Engine, fields
 from coralillo.validation import validation_rule
 from coralillo.errors import ValidationErrors, InvalidFieldError
 
+nrm = Engine()
+
 
 class TestForm(Form):
     field1 = fields.Text()
@@ -15,17 +17,20 @@ class TestForm(Form):
             raise InvalidFieldError(field='field1')
 
     class Meta:
-        engine = Engine()
+        engine = nrm
 
 
 class TestModel(Model):
     field1 = fields.Text(index=True, required=False, private=True)
 
     class Meta:
-        engine = Engine()
+        engine = nrm
 
 
 class ValidationTestCase(unittest.TestCase):
+
+    def setUp(self):
+        nrm.lua.drop(args=['*'])
 
     def test_validate_with_custom_rules(self):
         with self.assertRaises(ValidationErrors):

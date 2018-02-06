@@ -98,7 +98,8 @@ class Field:
             if self.name in self.obj._old:
                 redis.hdel(key, self.obj._old[self.name])
 
-            redis.hset(key, value, self.obj.id)
+            if value is not None:
+                redis.hset(key, value, self.obj.id)
 
     def delete(self, redis):
         ''' Deletes this field's value from the databse. Should be implemented
