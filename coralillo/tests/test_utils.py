@@ -14,5 +14,5 @@ class UtilsTestCase(unittest.TestCase):
         self.assertListEqual(parse_embed(array), output)
 
         array = ['object.field', 'foo', 'object.var']
-        output = [['object', ['field', 'var']], ['foo', None]]
+        output = [['foo', None], ['object', ['field', 'var']]]
         self.assertListEqual(parse_embed(array), output)

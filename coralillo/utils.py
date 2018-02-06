@@ -39,7 +39,7 @@ def parse_embed(embed_array):
 
             fields[pieces[0]].append(pieces[1])
 
-    return list(map(
+    return sorted(map(
         lambda item: list(item),
         fields.items()
-    ))
+    ), key=lambda x:x[0])
