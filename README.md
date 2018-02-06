@@ -1,5 +1,7 @@
 # Coralillo
 
+[![Build Status](https://travis-ci.org/getfleety/coralillo.svg?branch=master)](https://travis-ci.org/getfleety/coralillo)
+
 A redis ORM. This project is in active development, if you think it is useful contact me so we can talk about its usage, features and future of the project.
 
 ## Installation
