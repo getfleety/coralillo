@@ -6,14 +6,17 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
+# Get the long description from the README file
+with open(path.join(here, 'README.rst')) as f:
+    long_description = f.read()
+
 setup(
     name='coralillo',
 
-    version='0.6.13',
+    version='0.6.14',
 
     description='An Object-Redis Mapping',
-    long_description="""Coralillo provides a familiar API to store your objects
-    in a redis database.""",
+    long_description=long_description,
 
     url='https://getfleety.github.io/coralillo/',
 
