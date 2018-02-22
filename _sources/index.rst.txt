@@ -53,6 +53,7 @@ Learn More
 .. toctree::
    :maxdepth: 2
 
+   connection_parameters
    model_definition
    flask_integration
    scripting

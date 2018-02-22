@@ -4,20 +4,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Fields &#8212; Coralillo 1.8.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.8.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -29,8 +21,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
@@ -42,21 +33,21 @@
 <h1>Fields<a class="headerlink" href="#fields" title="Permalink to this headline">¶</a></h1>
 <p>Fields let you define your object’s properties and transform the values retrieved from the database, we support the following:</p>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">fields.Text</span></code> A simple text field</li>
-<li><code class="docutils literal"><span class="pre">fields.Hash</span></code> A hashed text using bcrypt</li>
-<li><code class="docutils literal"><span class="pre">fields.Bool</span></code> A true/false value</li>
-<li><code class="docutils literal"><span class="pre">fields.Integer</span></code> An integer</li>
-<li><code class="docutils literal"><span class="pre">fields.Float</span></code> A floating point value</li>
-<li><code class="docutils literal"><span class="pre">fields.Datetime</span></code> A date and time</li>
-<li><code class="docutils literal"><span class="pre">fields.Location</span></code> A pair of latitude/longitude</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Text</span></code> A simple text field</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Hash</span></code> A hashed text using bcrypt</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Bool</span></code> A true/false value</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Integer</span></code> An integer</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Float</span></code> A floating point value</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Datetime</span></code> A date and time</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.Location</span></code> A pair of latitude/longitude</li>
 </ul>
 <div class="section" id="relation-fields">
 <h2>Relation fields<a class="headerlink" href="#relation-fields" title="Permalink to this headline">¶</a></h2>
 <p>We also provide fields for defining relationships with other models in a ORM-fashion</p>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">fields.SetRelation</span></code> Stored as a set of the related ids</li>
-<li><code class="docutils literal"><span class="pre">fields.SortedSetRelation</span></code> Stored as a sorteed set of the related ids, using a sotring key</li>
-<li><code class="docutils literal"><span class="pre">fields.ForeignIdRelation</span></code> simply stores the string id of the related object</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.SetRelation</span></code> Stored as a set of the related ids</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.SortedSetRelation</span></code> Stored as a sorteed set of the related ids, using a sotring key</li>
+<li><code class="docutils literal notranslate"><span class="pre">fields.ForeignIdRelation</span></code> simply stores the string id of the related object</li>
 </ul>
 </div>
 <div class="section" id="indexes">
@@ -65,17 +56,17 @@
 </div>
 <div class="section" id="creating-your-own-fields">
 <h2>Creating your own fields<a class="headerlink" href="#creating-your-own-fields" title="Permalink to this headline">¶</a></h2>
-<p>Simply subclass <code class="docutils literal"><span class="pre">Field</span></code> or <code class="docutils literal"><span class="pre">Relation</span></code>.</p>
+<p>Simply subclass <code class="docutils literal notranslate"><span class="pre">Field</span></code> or <code class="docutils literal notranslate"><span class="pre">Relation</span></code>.</p>
 <p>NORM fields follow an specific workflow to read/write from/to the redis database. Such workflow needs the following methods to be implemented (or inherited) for each field:</p>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">__init__</span></code> for field initialization, don’t forget to call the parent’s constructor</li>
-<li><code class="docutils literal"><span class="pre">init</span></code> is called to parse a value given in the model’s constructor</li>
-<li><code class="docutils literal"><span class="pre">recover</span></code> is called to parse a value retrieved from database</li>
-<li><code class="docutils literal"><span class="pre">prepare</span></code> is called to transform values or <em>prepare</em> them to be sent to database</li>
-<li><code class="docutils literal"><span class="pre">to_json</span></code> should return the json-friendly version of the value</li>
-<li><code class="docutils literal"><span class="pre">validate</span></code> is called when doing <code class="docutils literal"><span class="pre">Model.validate(data)</span></code> or <code class="docutils literal"><span class="pre">obj.update(data)</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">__init__</span></code> for field initialization, don’t forget to call the parent’s constructor</li>
+<li><code class="docutils literal notranslate"><span class="pre">init</span></code> is called to parse a value given in the model’s constructor</li>
+<li><code class="docutils literal notranslate"><span class="pre">recover</span></code> is called to parse a value retrieved from database</li>
+<li><code class="docutils literal notranslate"><span class="pre">prepare</span></code> is called to transform values or <em>prepare</em> them to be sent to database</li>
+<li><code class="docutils literal notranslate"><span class="pre">to_json</span></code> should return the json-friendly version of the value</li>
+<li><code class="docutils literal notranslate"><span class="pre">validate</span></code> is called when doing <code class="docutils literal notranslate"><span class="pre">Model.validate(data)</span></code> or <code class="docutils literal notranslate"><span class="pre">obj.update(data)</span></code></li>
 </ul>
-<p>Additionally, the following methods are needed for <code class="docutils literal"><span class="pre">Relation</span></code> subclasses:</p>
+<p>Additionally, the following methods are needed for <code class="docutils literal notranslate"><span class="pre">Relation</span></code> subclasses:</p>
 <dl class="function">
 <dt id="save">
 <code class="descname">save</code><span class="sig-paren">(</span><em>value</em>, <em>pipeline</em><span class="optional">[</span>, <em>commit=True</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#save" title="Permalink to this definition">¶</a></dt>
@@ -103,7 +94,7 @@
 <dl class="function">
 <dt id="get_related_ids">
 <code class="descname">get_related_ids</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#get_related_ids" title="Permalink to this definition">¶</a></dt>
-<dd><p>for subclasses of <code class="docutils literal"><span class="pre">SetRelation</span></code>, returns the list of related ids</p>
+<dd><p>for subclasses of <code class="docutils literal notranslate"><span class="pre">SetRelation</span></code>, returns the list of related ids</p>
 </dd></dl>
 
 <dl class="function">
@@ -115,7 +106,7 @@
 <dl class="function">
 <dt id="__contains__">
 <code class="descname">__contains__</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#__contains__" title="Permalink to this definition">¶</a></dt>
-<dd><p>is for subclasses of <code class="docutils literal"><span class="pre">SetRelation</span></code> and should tell wether or not the given object is in this relation. Usually called via the proxy object.</p>
+<dd><p>is for subclasses of <code class="docutils literal notranslate"><span class="pre">SetRelation</span></code> and should tell wether or not the given object is in this relation. Usually called via the proxy object.</p>
 </dd></dl>
 
 </div>
@@ -140,6 +131,7 @@
 
 <h3>Navigation</h3>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="connection_parameters.html">Connection parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model_definition.html">Defining models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flask_integration.html">Flask Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripting.html">Lua scripting</a></li>
@@ -164,12 +156,14 @@
 </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -180,7 +174,7 @@
       &copy;2017, Abraham Toriz Cruz.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
