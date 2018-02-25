@@ -1,0 +1,240 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>API &#8212; Coralillo 1.8.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Helpers" href="helpers.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="coralillo.Model">
+<em class="property">class </em><code class="descclassname">coralillo.</code><code class="descname">Model</code><span class="sig-paren">(</span><em>id=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines a model that comunicates to the Redis database</p>
+<dl class="method">
+<dt id="coralillo.Model.__eq__">
+<code class="descname">__eq__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.__eq__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares this object to another. Returns true if both are of the
+same class and have the same properties. Returns false otherwise</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.cls_key">
+<em class="property">classmethod </em><code class="descname">cls_key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.cls_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.cls_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the redis key prefix assigned to this model</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.count">
+<em class="property">classmethod </em><code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns object count for this model</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes this model from the database, calling delete in each field
+to properly delete special cases</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.fqn">
+<code class="descname">fqn</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.fqn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.fqn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fully qualified name for this object</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.get">
+<em class="property">classmethod </em><code class="descname">get</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves an object by id. Returns None in case of failure</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.get_all">
+<em class="property">classmethod </em><code class="descname">get_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.get_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.get_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets all available instances of this model from the database</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.get_by">
+<em class="property">classmethod </em><code class="descname">get_by</code><span class="sig-paren">(</span><em>field</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.get_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.get_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to retrieve an isinstance of this model from the database
+given a value for a defined index. Return None in case of failure</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.get_or_exception">
+<em class="property">classmethod </em><code class="descname">get_or_exception</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.get_or_exception"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.get_or_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to retrieve an instance of this model from the database or
+raises an exception in case of failure</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="coralillo.Model.is_object_key">
+<em class="property">static </em><code class="descname">is_object_key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.is_object_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.is_object_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>checks if the given key belongs to an object. Its easy since it
+depends on the key ending like: ‘:obj’</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.key">
+<code class="descname">key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the redis key to access this object’s values</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.members_key">
+<em class="property">classmethod </em><code class="descname">members_key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.members_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.members_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>This key holds a set whose members are the ids that exist of objects
+from this class</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.permission">
+<code class="descname">permission</code><span class="sig-paren">(</span><em>restrict=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.permission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fully qualified key name to a permission over this object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.reload">
+<code class="descname">reload</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.reload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.reload" title="Permalink to this definition">¶</a></dt>
+<dd><p>reloads this object so if it was updated in the database it now
+contains the new values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.save">
+<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Persists this object to the database. Each field knows how to store
+itself so we don’t have to worry about it</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><em>fields=None</em>, <em>embed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes this model to a JSON representation so it can be sent
+via an HTTP REST API</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="coralillo.Model.tree_match">
+<em class="property">classmethod </em><code class="descname">tree_match</code><span class="sig-paren">(</span><em>field</em>, <em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.tree_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.tree_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a tree index, retrieves the ids atached to the given prefix,
+think of if as a mechanism for pattern suscription, where two models
+attached to the <cite>a</cite>, <cite>a:b</cite> respectively are found by the <cite>a:b</cite> string,
+because both model’s subscription key matches the string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="coralillo.Model.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>validates the given data against this object’s rules and then
+updates</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><p class="logo"><a href="index.html">
+  <img class="logo" src="_static/coralillo.png" alt="Logo"/>
+</a></p>
+<h1 class="logo"><a href="index.html">Coralillo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="connection_parameters.html">Connection parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_definition.html">Defining models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flask_integration.html">Flask Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripting.html">Lua scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_tenancy.html">Multi-tenancy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="atomic_operations.html">Atomic operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending.html">Extending</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design_desitions.html">Design desitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="helpers.html">Helpers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a></li>
+</ul>
+
+<h3>Useful links</h3>
+<ul>
+    <li><a href="https://github.com/getfleety/coralillo">Github</a></li>
+    <li><a href="https://pypi.python.org/pypi/coralillo/">PyPi</a></li>
+    <li><a href="https://github.com/getfleety/coralillo/issues">Issues</a></li>
+</ul><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="helpers.html" title="previous chapter">Helpers</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Abraham Toriz Cruz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
