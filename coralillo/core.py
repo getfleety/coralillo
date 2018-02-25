@@ -213,7 +213,7 @@ class Model(Form):
     @staticmethod
     def is_object_key(key):
         ''' checks if the given key belongs to an object. Its easy since it
-        depends on the key eding like: ':obj' '''
+        depends on the key ending like: ':obj' '''
         return re.match('^.*:obj$', key)
 
     @classmethod
@@ -372,6 +372,8 @@ class Model(Form):
         return '{}:{}'.format(prefix, self.id)
 
     def permission(self, restrict=None):
+        ''' Returns a fully qualified key name to a permission over this object
+        '''
         if restrict is None:
             return self.fqn()
 

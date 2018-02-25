@@ -62,6 +62,7 @@ Learn More
    extending
    design_desitions
    helpers
+   api
 
 Indices and tables
 ------------------
