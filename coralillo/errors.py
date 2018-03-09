@@ -15,6 +15,15 @@ class ValidationErrors(Exception):
     def __init__(self):
         self.errors = []
 
+    def __iter__(self):
+        return self.errors
+
+    def __getitem__(self, index):
+        return self.errors[index]
+
+    def __len__(self):
+        return len(self.errors)
+
     def append(self, e):
         self.errors.append(e)
 

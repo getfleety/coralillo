@@ -48,7 +48,8 @@ class Proxy:
 
 
 class Form:
-    '''Defines an object with fields'''
+    ''' Parent class of the Model class, defines validation and other useful
+    functions. '''
 
     def __init__(self):
         # This allows fast queries for set relations
@@ -57,6 +58,8 @@ class Form:
 
     @classmethod
     def validate(cls, **kwargs):
+        ''' Validates the data received as keyword arguments whose name match
+        this class attributes. '''
         # errors can store multiple errors
         # obj is an instance in case validation succeeds
         # redis is needed for database validation

@@ -54,7 +54,8 @@ Learn More
    :maxdepth: 2
 
    connection_parameters
-   model_definition
+   fields
+   validation
    flask_integration
    scripting
    multi_tenancy

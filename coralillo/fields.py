@@ -15,19 +15,19 @@ class Field:
 
     def __init__(self, *, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, allowed=None, fillable=True):
         # This field's value is mapped to the ID in a redis hash so you can Model.get_by(field, value)
-        self.index     = index     
+        self.index     = index
 
         # This field is required in validation
-        self.required  = required  
+        self.required  = required
 
         # This field's default value
-        self.default   = default   
+        self.default   = default
 
         # This field's value is not published in the JSON representation of the object
-        self.private   = private   
+        self.private   = private
 
         # A regular expresion that validates this field's value
-        self.regex     = regex     
+        self.regex     = regex
 
         # A set of forbidden values for this field
         self.forbidden = forbidden
@@ -36,7 +36,7 @@ class Field:
         self.allowed = allowed
 
         # This field can't be set via http
-        self.fillable  = fillable  
+        self.fillable  = fillable
 
         # This will be set later by the proxy
         self.name      = name
