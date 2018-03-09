@@ -99,8 +99,48 @@ Sometimes you might want to prevent a field from being filled or validated using
 the :py:func:`coralillo.Form.validate`, in that case the keyword argument
 ``fillable`` of a field will do the trick.
 
+.. testcode::
+
+   from coralillo import Form, Engine, fields, errors
+
+   eng = Engine()
+
+   class MyForm(Form):
+      field1 = fields.Text(fillable=False)
+
+      class Meta:
+         engine = eng
+
+   data = MyForm.validate(field1='de')
+
+   assert data.field1 is None
+
 Custom rules
 ------------
 
 You can add custom rules to your forms or models to make even more complicated
-validation rules.
+validation rules. Simply apply the :py:func:`coralillo.validation.validation_rule`
+decorator to a function in your class and write your code so that it raises the
+appropiate subclass of :py:class:`coralillo.errors.BadField` as shown in the
+example.
+
+.. testcode::
+
+   from coralillo import Form, Engine, fields, errors
+   from coralillo.validation import validation_rule
+
+   eng = Engine()
+
+   class Myform(Form):
+      password = fields.Text()
+      confirmation = fields.Text()
+
+      @validation_rule
+      def confirmation_matches(data):
+         if data.password != data.confirmation:
+            raise errors.InvalidFieldError(field='confirmation')
+
+   try:
+      MyForm.validate(password='foo', confirmation='var')
+   except errors.ValidationErrors as ve:
+      assert ve[0].field == 'confirmation'
