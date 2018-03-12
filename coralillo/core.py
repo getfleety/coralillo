@@ -56,6 +56,13 @@ class Form:
         self.proxy = Proxy(self)
         self._old   = dict()
 
+        for fieldname, field in self.proxy:
+            setattr(
+                self,
+                fieldname,
+                None
+            )
+
     @classmethod
     def validate(cls, **kwargs):
         ''' Validates the data received as keyword arguments whose name match
