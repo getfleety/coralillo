@@ -33,6 +33,20 @@
   <div class="section" id="api">
 <h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
+<dt id="coralillo.Form">
+<em class="property">class </em><code class="descclassname">coralillo.</code><code class="descname">Form</code><a class="reference internal" href="_modules/coralillo/core.html#Form"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Form" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parent class of the Model class, defines validation and other useful
+functions.</p>
+<dl class="classmethod">
+<dt id="coralillo.Form.validate">
+<em class="property">classmethod </em><code class="descname">validate</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Form.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Form.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates the data received as keyword arguments whose name match
+this class attributes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="coralillo.Model">
 <em class="property">class </em><code class="descclassname">coralillo.</code><code class="descname">Model</code><span class="sig-paren">(</span><em>id=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/coralillo/core.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#coralillo.Model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines a model that comunicates to the Redis database</p>
@@ -181,7 +195,8 @@ updates</p>
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="connection_parameters.html">Connection parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model_definition.html">Defining models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fields.html">Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flask_integration.html">Flask Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripting.html">Lua scripting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi_tenancy.html">Multi-tenancy</a></li>

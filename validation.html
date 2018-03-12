@@ -1,0 +1,256 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Validation &#8212; Coralillo 1.8.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Flask Integration" href="flask_integration.html" />
+    <link rel="prev" title="Fields" href="fields.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="validation">
+<h1>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h1>
+<p>Coralillo includes validation capabilities so you can check the data sent by a
+request before creating an object.</p>
+<p>Validation code is part of the <a class="reference internal" href="api.html#coralillo.Form" title="coralillo.Form"><code class="xref py py-class docutils literal notranslate"><span class="pre">coralillo.Form</span></code></a> class, which is parent
+of the <a class="reference internal" href="api.html#coralillo.Model" title="coralillo.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">coralillo.Model</span></code></a> class.</p>
+<div class="section" id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<p>In its simplest form, validation ensures that the data passed to the validation
+function matches the field definition of the class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">coralillo</span> <span class="kn">import</span> <span class="n">Form</span><span class="p">,</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">errors</span>
+
+<span class="n">eng</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">MyForm</span><span class="p">(</span><span class="n">Form</span><span class="p">):</span>
+   <span class="n">field1</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+   <span class="n">field2</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+   <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+      <span class="n">engine</span> <span class="o">=</span> <span class="n">eng</span>
+
+<span class="k">try</span><span class="p">:</span>
+   <span class="n">MyForm</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ValidationErrors</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
+   <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ve</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+   <span class="k">assert</span> <span class="n">ve</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s1">&#39;field1&#39;</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">MyForm</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">field1</span><span class="o">=</span><span class="s1">&#39;querétaro&#39;</span><span class="p">,</span> <span class="n">field2</span><span class="o">=</span><span class="s1">&#39;chihuahua&#39;</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">field1</span> <span class="o">==</span> <span class="s1">&#39;querétaro&#39;</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">field2</span> <span class="o">==</span> <span class="s1">&#39;chihuahua&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="default-validations">
+<h2>Default validations<a class="headerlink" href="#default-validations" title="Permalink to this headline">¶</a></h2>
+<p>Validation rules are built on field definition, here are some rules that are
+automatically added in addition to <code class="docutils literal notranslate"><span class="pre">required</span></code> rule.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">coralillo</span> <span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">errors</span>
+
+<span class="n">eng</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Base</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+
+   <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+      <span class="n">engine</span> <span class="o">=</span> <span class="n">eng</span>
+
+<span class="c1"># Validate uniqueness of indexes</span>
+<span class="k">class</span> <span class="nc">Uniqueness</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+   <span class="n">username</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">Uniqueness</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<span class="k">try</span><span class="p">:</span>
+   <span class="n">Uniqueness</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ValidationErrors</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
+   <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ve</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">errors</span><span class="o">.</span><span class="n">NotUniqueFieldError</span><span class="p">)</span>
+
+<span class="c1"># Validate regexes</span>
+<span class="k">class</span> <span class="nc">Regex</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+   <span class="n">css_color</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;#[0-9a-f]{6}&#39;</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+   <span class="n">Regex</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">css_color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ValidationErrors</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
+   <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ve</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFieldError</span><span class="p">)</span>
+
+<span class="c1"># Validate forbidden values</span>
+<span class="k">class</span> <span class="nc">Forbidden</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+   <span class="n">name</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">forbidden</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;john&#39;</span><span class="p">])</span>
+
+<span class="k">try</span><span class="p">:</span>
+   <span class="n">Forbidden</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;john&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ValidationErrors</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
+   <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ve</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">errors</span><span class="o">.</span><span class="n">ReservedFieldError</span><span class="p">)</span>
+
+<span class="c1"># Validate allowed values</span>
+<span class="k">class</span> <span class="nc">Allowed</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+   <span class="n">name</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">allowed</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;john&#39;</span><span class="p">])</span>
+
+<span class="k">try</span><span class="p">:</span>
+   <span class="n">Allowed</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;maría&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ValidationErrors</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
+   <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ve</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFieldError</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="non-fillable-fields">
+<h2>Non fillable fields<a class="headerlink" href="#non-fillable-fields" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you might want to prevent a field from being filled or validated using
+the <a class="reference internal" href="api.html#coralillo.Form.validate" title="coralillo.Form.validate"><code class="xref py py-func docutils literal notranslate"><span class="pre">coralillo.Form.validate()</span></code></a>, in that case the keyword argument
+<code class="docutils literal notranslate"><span class="pre">fillable</span></code> of a field will do the trick.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">coralillo</span> <span class="kn">import</span> <span class="n">Form</span><span class="p">,</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">errors</span>
+
+<span class="n">eng</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">MyForm</span><span class="p">(</span><span class="n">Form</span><span class="p">):</span>
+   <span class="n">field1</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">fillable</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+   <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+      <span class="n">engine</span> <span class="o">=</span> <span class="n">eng</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">MyForm</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">field1</span><span class="o">=</span><span class="s1">&#39;de&#39;</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">field1</span> <span class="ow">is</span> <span class="bp">None</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-rules">
+<h2>Custom rules<a class="headerlink" href="#custom-rules" title="Permalink to this headline">¶</a></h2>
+<p>You can add custom rules to your forms or models to make even more complicated
+validation rules. Simply apply the <code class="xref py py-func docutils literal notranslate"><span class="pre">coralillo.validation.validation_rule()</span></code>
+decorator to a function in your class and write your code so that it raises the
+appropiate subclass of <code class="xref py py-class docutils literal notranslate"><span class="pre">coralillo.errors.BadField</span></code> as shown in the
+example.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">coralillo</span> <span class="kn">import</span> <span class="n">Form</span><span class="p">,</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">coralillo.validation</span> <span class="kn">import</span> <span class="n">validation_rule</span>
+
+<span class="n">eng</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Myform</span><span class="p">(</span><span class="n">Form</span><span class="p">):</span>
+   <span class="n">password</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+   <span class="n">confirmation</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Text</span><span class="p">()</span>
+
+   <span class="nd">@validation_rule</span>
+   <span class="k">def</span> <span class="nf">confirmation_matches</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">password</span> <span class="o">!=</span> <span class="n">data</span><span class="o">.</span><span class="n">confirmation</span><span class="p">:</span>
+         <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFieldError</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s1">&#39;confirmation&#39;</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+   <span class="n">MyForm</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="n">confirmation</span><span class="o">=</span><span class="s1">&#39;var&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ValidationErrors</span> <span class="k">as</span> <span class="n">ve</span><span class="p">:</span>
+   <span class="k">assert</span> <span class="n">ve</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s1">&#39;confirmation&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><p class="logo"><a href="index.html">
+  <img class="logo" src="_static/coralillo.png" alt="Logo"/>
+</a></p>
+<h1 class="logo"><a href="index.html">Coralillo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="connection_parameters.html">Connection parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fields.html">Fields</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#default-validations">Default validations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#non-fillable-fields">Non fillable fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-rules">Custom rules</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="flask_integration.html">Flask Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripting.html">Lua scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_tenancy.html">Multi-tenancy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="atomic_operations.html">Atomic operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending.html">Extending</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design_desitions.html">Design desitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="helpers.html">Helpers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+</ul>
+
+<h3>Useful links</h3>
+<ul>
+    <li><a href="https://github.com/getfleety/coralillo">Github</a></li>
+    <li><a href="https://pypi.python.org/pypi/coralillo/">PyPi</a></li>
+    <li><a href="https://github.com/getfleety/coralillo/issues">Issues</a></li>
+</ul><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="fields.html" title="previous chapter">Fields</a></li>
+      <li>Next: <a href="flask_integration.html" title="next chapter">Flask Integration</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Abraham Toriz Cruz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/validation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
