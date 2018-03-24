@@ -1,193 +1,183 @@
-from .models import Pet, Person, Driver, Car, nrm
-import unittest
+from .models import Pet, Person, Driver, Car
 
 
-class RelationTestCase(unittest.TestCase):
+def test_relation(nrm):
+    org = Car(
+        name      = 'Testing Inc',
+    ).save()
 
-    def setUp(self):
-        nrm.lua.drop(args=['*'])
+    user = Driver(
+        name      = 'Sam',
+    ).save()
+    user.proxy.cars.set([org])
 
-    def test_relation(self):
-        org = Car(
-            name      = 'Testing Inc',
-        ).save()
+    assert user.proxy.cars.count() == 1
 
-        user = Driver(
-            name      = 'Sam',
-        ).save()
-        user.proxy.cars.set([org])
+    assert user.cars[0].id == org.id
+    assert nrm.redis.sismember('driver:{}:srel_cars'.format(user.id), org.id)
 
-        self.assertEqual(user.proxy.cars.count(), 1)
+    same = Driver.get(user.id)
+    same.proxy.cars.fill()
 
-        self.assertEqual(user.cars[0].id, org.id)
-        self.assertTrue(nrm.redis.sismember('driver:{}:srel_cars'.format(user.id), org.id))
+    assert same.cars[0].id == org.id
+    assert same.to_json(embed=['cars'])['cars'][0]['name'] == 'Testing Inc'
 
-        same = Driver.get(user.id)
-        same.proxy.cars.fill()
+def test_delete_with_related(nrm):
+    doggo = Pet(name='doggo').save()
+    catto = Pet(name='catto').save()
 
-        self.assertEqual(same.cars[0].id, org.id)
-        self.assertEqual(same.to_json(embed=['cars'])['cars'][0]['name'], 'Testing Inc')
+    owner = Person(
+        name = 'John',
+    ).save()
+    owner.proxy.pets.set([doggo, catto])
 
-    def test_delete_with_related(self):
-        doggo = Pet(name='doggo').save()
-        catto = Pet(name='catto').save()
+    assert doggo in owner.proxy.pets
+    assert catto in owner.proxy.pets
 
-        owner = Person(
-            name = 'John',
-        ).save()
-        owner.proxy.pets.set([doggo, catto])
+    owner.delete()
 
-        self.assertTrue(doggo in owner.proxy.pets)
-        self.assertTrue(catto in owner.proxy.pets)
+    assert Pet.get(doggo.id) is None
+    assert Pet.get(catto.id) is None
 
-        owner.delete()
+def test_many_to_many_relationship(nrm):
+    u1 = Driver(name='u1').save()
+    u2 = Driver(name='u2').save()
+    o1 = Car(name='o1').save()
+    o2 = Car(name='o2').save()
 
-        self.assertIsNone(Pet.get(doggo.id))
-        self.assertIsNone(Pet.get(catto.id))
+    # test adding a relationship creates the inverse
+    u1.proxy.cars.set([o1, o2])
 
-    def test_many_to_many_relationship(self):
-        u1 = Driver(name='u1').save()
-        u2 = Driver(name='u2').save()
-        o1 = Car(name='o1').save()
-        o2 = Car(name='o2').save()
+    o1.proxy.drivers.fill()
+    o2.proxy.drivers.fill()
 
-        # test adding a relationship creates the inverse
-        u1.proxy.cars.set([o1, o2])
+    assert type(o1.drivers) == list
+    assert type(o2.drivers) == list
 
-        o1.proxy.drivers.fill()
-        o2.proxy.drivers.fill()
+    assert len(o1.drivers) == 1
+    assert len(o2.drivers) == 1
 
-        self.assertTrue(type(o1.drivers) == list)
-        self.assertTrue(type(o2.drivers) == list)
+    assert o1.drivers[0].name == 'u1'
+    assert o2.drivers[0].name == 'u1'
 
-        self.assertEqual(len(o1.drivers), 1)
-        self.assertEqual(len(o2.drivers), 1)
+    u2.proxy.cars.set([o2])
 
-        self.assertEqual(o1.drivers[0].name, 'u1')
-        self.assertEqual(o2.drivers[0].name, 'u1')
+    o1.proxy.drivers.fill()
+    o2.proxy.drivers.fill()
 
-        u2.proxy.cars.set([o2])
+    assert type(o1.drivers) == list
+    assert type(o2.drivers) == list
 
-        o1.proxy.drivers.fill()
-        o2.proxy.drivers.fill()
+    assert len(o1.drivers) == 1
+    assert len(o2.drivers) == 2
 
-        self.assertTrue(type(o1.drivers) == list)
-        self.assertTrue(type(o2.drivers) == list)
+    o2.drivers.sort(key=lambda x:x.name)
 
-        self.assertEqual(len(o1.drivers), 1)
-        self.assertEqual(len(o2.drivers), 2)
+    assert o1.drivers[0].name == 'u1'
+    assert o2.drivers[0].name == 'u1'
+    assert o2.drivers[1].name == 'u2'
 
-        o2.drivers.sort(key=lambda x:x.name)
+    # test deleting an object deletes the relationship in the related
 
-        self.assertEqual(o1.drivers[0].name, 'u1')
-        self.assertEqual(o2.drivers[0].name, 'u1')
-        self.assertEqual(o2.drivers[1].name, 'u2')
+    u1.delete()
 
-        # test deleting an object deletes the relationship in the related
+    o1.proxy.drivers.fill()
+    o2.proxy.drivers.fill()
 
-        u1.delete()
+    assert type(o1.drivers) == list
+    assert type(o2.drivers) == list
 
-        o1.proxy.drivers.fill()
-        o2.proxy.drivers.fill()
+    assert len(o1.drivers) == 0
+    assert len(o2.drivers) == 1
 
-        self.assertTrue(type(o1.drivers) == list)
-        self.assertTrue(type(o2.drivers) == list)
+def test_querying_related(nrm):
+    o1 = Car(name='o1').save()
+    u1 = Driver(name='u1').save()
+    u2 = Driver(name='u2').save()
+    u1.proxy.cars.set([o1])
 
-        self.assertEqual(len(o1.drivers), 0)
-        self.assertEqual(len(o2.drivers), 1)
+    assert u1 in o1.proxy.drivers
+    assert u2 not in o1.proxy.drivers
 
-    def test_querying_related(self):
-        o1 = Car(name='o1').save()
-        u1 = Driver(name='u1').save()
-        u2 = Driver(name='u2').save()
-        u1.proxy.cars.set([o1])
+def test_foreign_key(nrm):
+    owner = Person(name='John').save()
+    pet = Pet(name='doggo').save()
 
-        self.assertTrue(u1 in o1.proxy.drivers)
-        self.assertFalse(u2 in o1.proxy.drivers)
+    pet.proxy.owner.set(owner)
+    owner.proxy.pets.fill()
 
-    def test_foreign_key(self):
-        owner = Person(name='John').save()
-        pet = Pet(name='doggo').save()
+    assert pet.owner is not None
+    assert pet.owner.id == owner.id
 
-        pet.proxy.owner.set(owner)
-        owner.proxy.pets.fill()
+    assert type(owner.pets) == list
+    assert len(owner.pets) == 1
+    assert owner.pets[0].id == pet.id
 
-        self.assertIsNotNone(pet.owner)
-        self.assertEqual(pet.owner.id, owner.id)
+    pet.delete()
 
-        self.assertTrue(type(owner.pets) == list)
-        self.assertEqual(len(owner.pets), 1)
-        self.assertEqual(owner.pets[0].id, pet.id)
+    pet.proxy.owner.fill()
+    owner.proxy.pets.fill()
 
-        pet.delete()
+    assert type(owner.pets) == list
+    assert len(owner.pets) == 0
 
-        pet.proxy.owner.fill()
-        owner.proxy.pets.fill()
+def test_foreign_key_inverse(nrm):
+    pet = Pet(name='doggo').save()
+    owner = Person(name='John').save()
+    owner.proxy.pets.set([pet])
 
-        self.assertTrue(type(owner.pets) == list)
-        self.assertEqual(len(owner.pets), 0)
+    pet.proxy.owner.fill()
+    owner.proxy.pets.fill()
 
-    def test_foreign_key_inverse(self):
-        pet = Pet(name='doggo').save()
-        owner = Person(name='John').save()
-        owner.proxy.pets.set([pet])
+    assert pet.owner is not None
+    assert pet.owner.id == owner.id
 
-        pet.proxy.owner.fill()
-        owner.proxy.pets.fill()
+    assert type(owner.pets) == list
+    assert len(owner.pets) == 1
+    assert owner.pets[0].id == pet.id
 
-        self.assertIsNotNone(pet.owner)
-        self.assertEqual(pet.owner.id, owner.id)
+def test_delete_relation(nrm):
+    c1 = Car().save()
+    c2 = Car().save()
 
-        self.assertTrue(type(owner.pets) == list)
-        self.assertEqual(len(owner.pets), 1)
-        self.assertEqual(owner.pets[0].id, pet.id)
+    d1 = Driver().save()
 
-    def test_delete_relation(self):
-        c1 = Car().save()
-        c2 = Car().save()
+    d1.proxy.cars.set([c1, c2])
 
-        d1 = Driver().save()
+    assert c1 in d1.proxy.cars
+    assert c2 in d1.proxy.cars
+    assert d1 in c1.proxy.drivers
+    assert d1 in c2.proxy.drivers
 
-        d1.proxy.cars.set([c1, c2])
+    d1.proxy.cars.remove(c1)
 
-        self.assertTrue(c1 in d1.proxy.cars)
-        self.assertTrue(c2 in d1.proxy.cars)
-        self.assertTrue(d1 in c1.proxy.drivers)
-        self.assertTrue(d1 in c2.proxy.drivers)
+    assert c1 not in d1.proxy.cars
+    assert c2 in d1.proxy.cars
+    assert d1 not in c1.proxy.drivers
+    assert d1 in c2.proxy.drivers
 
-        d1.proxy.cars.remove(c1)
+def test_get_relation(nrm):
+    c1 = Car().save()
+    c2 = Car().save()
 
-        self.assertFalse(c1 in d1.proxy.cars)
-        self.assertTrue(c2 in d1.proxy.cars)
-        self.assertFalse(d1 in c1.proxy.drivers)
-        self.assertTrue(d1 in c2.proxy.drivers)
+    d1 = Driver().save()
 
-    def test_get_relation(self):
-        c1 = Car().save()
-        c2 = Car().save()
+    d1.proxy.cars.set([c1, c2])
 
-        d1 = Driver().save()
+    cars = d1.proxy.cars.get()
 
-        d1.proxy.cars.set([c1, c2])
+    orig = sorted([c1, c2], key=lambda c:c.id)
+    cars = sorted(cars, key=lambda c:c.id)
 
-        cars = d1.proxy.cars.get()
+    assert orig == cars
 
-        orig = sorted([c1, c2], key=lambda c:c.id)
-        cars = sorted(cars, key=lambda c:c.id)
+def test_get_foreignid_relation(nrm):
+    pet = Pet().save()
+    owner = Person().save()
+    owner.proxy.pets.add(pet)
 
-        self.assertListEqual(orig, cars)
+    assert pet.proxy.owner.get().id == owner.id
 
-    def test_get_foreignid_relation(self):
-        pet = Pet().save()
-        owner = Person().save()
-        owner.proxy.pets.add(pet)
+    owner.proxy.pets.remove(pet)
 
-        self.assertEqual(pet.proxy.owner.get().id, owner.id)
-
-        owner.proxy.pets.remove(pet)
-
-        self.assertIsNone(pet.proxy.owner.get())
-
-
-if __name__ == '__main__':
-    unittest.main()
+    assert pet.proxy.owner.get() is None
