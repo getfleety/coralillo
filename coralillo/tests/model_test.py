@@ -5,15 +5,15 @@ import unittest
 
 nrm = Engine()
 
-class TestModel(Model):
+class BaseModel(Model):
     class Meta:
         engine = nrm
 
-class Person(TestModel):
+class Person(BaseModel):
     name = fields.Text()
 
 
-class Ship(TestModel):
+class Ship(BaseModel):
     name = fields.Text()
     code = fields.Text(index=True)
 
@@ -29,11 +29,11 @@ class Pet(BoundedModel):
         engine = nrm
 
 
-class SideWalk(TestModel):
+class SideWalk(BaseModel):
     name = fields.Text()
 
 
-class House(TestModel):
+class House(BaseModel):
     number = fields.Integer(required=False)
 
 

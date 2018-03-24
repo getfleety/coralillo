@@ -6,7 +6,7 @@ from coralillo.errors import ValidationErrors, InvalidFieldError
 nrm = Engine()
 
 
-class TestForm(Form):
+class MyForm(Form):
     field1 = fields.Text()
     field2 = fields.Text()
 
@@ -20,7 +20,7 @@ class TestForm(Form):
         engine = nrm
 
 
-class TestModel(Model):
+class MyModel(Model):
     field1 = fields.Text(index=True, required=False, private=True)
 
     class Meta:
@@ -34,19 +34,19 @@ class ValidationTestCase(unittest.TestCase):
 
     def test_validate_with_custom_rules(self):
         with self.assertRaises(ValidationErrors):
-            TestForm.validate(
+            MyForm.validate(
                 field1 = 'po',
                 field2 = 'llo',
             )
 
         with self.assertRaises(ValidationErrors):
-            TestForm.validate()
+            MyForm.validate()
 
     def test_can_have_many_uniques_with_null_value(self):
-        m1 = TestModel.validate().save()
+        m1 = MyModel.validate().save()
         self.assertIsNone(m1.field1)
 
-        m2 = TestModel.validate().save()
+        m2 = MyModel.validate().save()
         self.assertIsNone(m2.field1)
 
 
