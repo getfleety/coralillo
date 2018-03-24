@@ -1,185 +1,143 @@
 from coralillo import datamodel, Engine, Model, BoundedModel, fields
 from coralillo.datamodel import debyte_string
 from coralillo.errors import ModelNotFoundError
-import unittest
+from .models import House, Table, Ship, Tenanted, SideWalk
+import pytest
 
-nrm = Engine()
+def test_create_user(nrm):
+    user = Table(
+        name      = 'John',
+    ).save()
 
-class BaseModel(Model):
-    class Meta:
-        engine = nrm
+    assert user.name == 'John'
 
-class Person(BaseModel):
-    name = fields.Text()
+    assert nrm.redis.sismember('table:members', user.id)
+    assert nrm.redis.hget('table:{}:obj'.format(user.id), 'name') == b'John'
 
+def test_retrieve_user_by_id(nrm):
+    carla = Table( name = 'Carla',).save()
+    roberta = Table( name = 'Roberta',).save()
 
-class Ship(BaseModel):
-    name = fields.Text()
-    code = fields.Text(index=True)
+    read_user = Table.get(carla.id)
 
+    assert read_user.name == carla.name
 
-class Pet(BoundedModel):
-    name = fields.Text()
+def test_retrieve_by_index(nrm):
+    titan = Ship(name='te trece', code = 'T13',).save()
+    atlan = Ship(name='te catorce', code = 'T14',).save()
 
-    @classmethod
-    def prefix(cls):
-        return 'testing'
+    found_ship = Ship.get_by('code', 'T13')
 
-    class Meta:
-        engine = nrm
+    assert found_ship is not None
+    assert titan == found_ship
 
+def test_update_keep_index(nrm):
+    ship = Ship(name='the ship', code='TS').save()
 
-class SideWalk(BaseModel):
-    name = fields.Text()
+    ship.update(name='updated name')
 
+    assert ship.code == 'TS'
+    assert ship.name == 'updated name'
 
-class House(BaseModel):
-    number = fields.Integer(required=False)
+    assert debyte_string(nrm.redis.hget('ship:index_code', 'TS')) == ship.id
 
+def test_update_changes_index(nrm):
+    ship = Ship(code='THECODE').save()
 
-class ModelTestCase(unittest.TestCase):
+    ship.update(code='NEWCODE')
 
-    def setUp(self):
-        nrm.lua.drop(args=['*'])
+    assert ship.code == 'NEWCODE'
 
-    def test_create_user(self):
-        user = Person(
-            name      = 'John',
-        ).save()
+    assert debyte_string(nrm.redis.hget('ship:index_code', 'NEWCODE')) == ship.id
+    assert nrm.redis.hget('ship:index_code', 'THECODE') is None
 
-        self.assertEqual(user.name, 'John')
+def test_get(nrm):
+    org = Table(name='Juan').save()
+    got = Table.get(org.id)
 
-        self.assertTrue(nrm.redis.sismember('person:members', user.id))
-        self.assertEqual(nrm.redis.hget('person:{}:obj'.format(user.id), 'name'), b'John')
+    assert org == got
 
-    def test_retrieve_user_by_id(self):
-        carla = Person( name = 'Carla',).save()
-        roberta = Person( name = 'Roberta',).save()
+def test_get_all(nrm):
+    p1 = Table(name='Juan').save()
+    p2 = Table(name='Pepe').save()
 
-        read_user = Person.get(carla.id)
+    allitems = Table.get_all()
 
-        self.assertEqual(read_user.name, carla.name)
+    allitems.sort(key=lambda x: x.name)
 
-    def test_retrieve_by_index(self):
-        titan = Ship(name='te trece', code = 'T13',).save()
-        atlan = Ship(name='te catorce', code = 'T14',).save()
+    item1 = allitems[0]
+    item2 = allitems[1]
 
-        found_ship = Ship.get_by('code', 'T13')
+    assert item1 == p1
+    assert item2 == p2
 
-        self.assertIsNotNone(found_ship)
-        self.assertTrue(titan == found_ship)
+def test_bounded_model(nrm):
+    dev = Tenanted(
+        name = 'foo',
+    ).save()
 
-    def test_update_keep_index(self):
-        ship = Ship(name='the ship', code='TS').save()
+    assert not nrm.redis.exists('tenanted:'+dev.id)
+    assert nrm.redis.exists('testing:tenanted:{}:obj'.format(dev.id))
+    assert nrm.redis.hget('testing:tenanted:{}:obj'.format(dev.id), 'name') == b'foo'
+    assert nrm.redis.sismember('testing:tenanted:members', dev.id)
 
-        ship.update(name='updated name')
+def test_delete(nrm):
+    dev = Tenanted(
+        code = 'foo',
+    ).save()
 
-        self.assertEqual(ship.code, 'TS')
-        self.assertEqual(ship.name, 'updated name')
+    assert Tenanted.get(dev.id) is not None
 
-        self.assertEqual(debyte_string(nrm.redis.hget('ship:index_code', 'TS')), ship.id)
+    dev.delete()
 
-    def test_update_changes_index(self):
-        ship = Ship(code='THECODE').save()
+    assert Tenanted.get(dev.id) is None
+    assert not nrm.redis.sismember('testing:tenanted:members', dev.id)
 
-        ship.update(code='NEWCODE')
+def test_delete_index(nrm):
+    ship = Ship(code='A12').save()
 
-        self.assertEqual(ship.code, 'NEWCODE')
+    assert debyte_string(nrm.redis.hget('ship:index_code', 'A12')) == ship.id
 
-        self.assertEqual(debyte_string(nrm.redis.hget('ship:index_code', 'NEWCODE')), ship.id)
-        self.assertIsNone(nrm.redis.hget('ship:index_code', 'THECODE'))
+    ship.delete()
 
-    def test_get(self):
-        org = Person(name='Juan').save()
-        got = Person.get(org.id)
+    assert not nrm.redis.hexists('ship:index_code', 'A12')
 
-        self.assertTrue(org == got)
+def test_is_object_key(nrm):
+    ship = Ship(code='A12').save()
 
-    def test_get_all(self):
-        p1 = Person(name='Juan').save()
-        p2 = Person(name='Pepe').save()
+    assert Ship.is_object_key(ship.key())
 
-        allitems = Person.get_all()
+def test_fqn(nrm):
+    ship = Ship(code='A12').save()
 
-        allitems.sort(key=lambda x: x.name)
+    assert ship.fqn() == 'ship:{}'.format(ship.id)
 
-        item1 = allitems[0]
-        item2 = allitems[1]
+def test_model_table_conversion(nrm):
+    sw = SideWalk(name='foo').save()
 
-        self.assertEqual(item1, p1)
-        self.assertEqual(item2, p2)
+    assert nrm.redis.exists('side_walk:members')
+    assert nrm.redis.exists('side_walk:{}:obj'.format(sw.id))
 
-    def test_bounded_model(self):
-        dev = Pet(
-            name = 'foo',
-        ).save()
+def test_object_count(nrm):
+    sw1 = SideWalk(name='1').save()
+    assert SideWalk.count() == 1
 
-        self.assertFalse(nrm.redis.exists('pet:'+dev.id))
-        self.assertTrue(nrm.redis.exists('testing:pet:{}:obj'.format(dev.id)))
-        self.assertEqual(nrm.redis.hget('testing:pet:{}:obj'.format(dev.id), 'name'), b'foo')
-        self.assertTrue(nrm.redis.sismember('testing:pet:members', dev.id))
+    sw2 = SideWalk(name='2').save()
+    assert SideWalk.count() == 2
 
-    def test_delete(self):
-        dev = Pet(
-            code = 'foo',
-        ).save()
+    sw1.delete()
+    assert SideWalk.count() == 1
 
-        self.assertIsNotNone(Pet.get(dev.id))
+def test_get_or_exception(nrm):
+    with pytest.raises(ModelNotFoundError):
+        SideWalk.get_or_exception('nonsense')
 
-        dev.delete()
+    with pytest.raises(ModelNotFoundError):
+        Ship.get_by_or_exception('code', 'nonsense')
 
-        self.assertIsNone(Pet.get(dev.id))
-        self.assertFalse(nrm.redis.sismember('testing:pet:members', dev.id))
+def test_recover_none_int(nrm):
+    h = House.validate()
+    h.save()
 
-    def test_delete_index(self):
-        ship = Ship(code='A12').save()
-
-        self.assertEqual(debyte_string(nrm.redis.hget('ship:index_code', 'A12')), ship.id)
-
-        ship.delete()
-
-        self.assertFalse(nrm.redis.hexists('ship:index_code', 'A12'))
-
-    def test_is_object_key(self):
-        ship = Ship(code='A12').save()
-
-        self.assertTrue(Ship.is_object_key(ship.key()))
-
-    def test_fqn(self):
-        ship = Ship(code='A12').save()
-
-        self.assertEqual(ship.fqn(), 'ship:{}'.format(ship.id))
-
-    def test_model_table_conversion(self):
-        sw = SideWalk(name='foo').save()
-
-        self.assertTrue(nrm.redis.exists('side_walk:members'))
-        self.assertTrue(nrm.redis.exists('side_walk:{}:obj'.format(sw.id)))
-
-    def test_object_count(self):
-        sw1 = SideWalk(name='1').save()
-        self.assertEqual(SideWalk.count(), 1)
-
-        sw2 = SideWalk(name='2').save()
-        self.assertEqual(SideWalk.count(), 2)
-
-        sw1.delete()
-        self.assertEqual(SideWalk.count(), 1)
-
-    def test_get_or_exception(self):
-        with self.assertRaises(ModelNotFoundError):
-            SideWalk.get_or_exception('nonsense')
-
-        with self.assertRaises(ModelNotFoundError):
-            Ship.get_by_or_exception('code', 'nonsense')
-
-    def test_recover_none_int(self):
-        h = House.validate()
-        h.save()
-
-        h_rec = House.get(h.id)
-        self.assertIsNone(h.number)
-
-
-if __name__ == '__main__':
-    unittest.main()
+    h_rec = House.get(h.id)
+    assert h.number is None
