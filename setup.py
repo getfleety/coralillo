@@ -71,5 +71,6 @@ setup(
         'test': [],
     },
 
-    test_suite = 'coralillo.tests.test_all',
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
 )

@@ -8,3 +8,5 @@ _modules/
 .cache
 .eggs
 .env*
+.tox/
+.pytest_cache/
