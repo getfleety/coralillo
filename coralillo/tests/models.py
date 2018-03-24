@@ -1,4 +1,4 @@
-from coralillo import Model, BoundedModel, Engine, fields
+from coralillo import Model, Form, BoundedModel, Engine, fields
 
 # for model testing
 class Table(Model):
@@ -20,6 +20,26 @@ class SideWalk(Model):
 
 class House(Model):
     number = fields.Integer(required=False)
+
+# for events test
+class Something(Model):
+    name = fields.Text()
+    notify = True
+
+# for fields test
+class Subscription(Model):
+    key_name = fields.TreeIndex()
+
+class User(Model):
+    password = fields.Hash()
+
+class Truck(Model):
+    last_position = fields.Location()
+
+# for form testing
+class ShipForm(Form):
+    name = fields.Text()
+    code = fields.Text()
 
 # For testing relationships
 class Pet(Model):
@@ -63,6 +83,11 @@ def bound_models(eng):
     Person.set_engine(eng)
     Pet.set_engine(eng)
     Ship.set_engine(eng)
+    ShipForm.set_engine(eng)
     SideWalk.set_engine(eng)
+    Something.set_engine(eng)
+    Subscription.set_engine(eng)
     Table.set_engine(eng)
     Tenanted.set_engine(eng)
+    User.set_engine(eng)
+    Truck.set_engine(eng)

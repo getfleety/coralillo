@@ -123,6 +123,8 @@ class Form:
 
     @classmethod
     def set_engine(cls, neweng):
+        ''' Sets the given coralillo engine so the model uses it to communicate
+        with the redis database '''
         assert isinstance(neweng, Engine), 'Provided object must be of class Engine'
 
         if hasattr(cls, 'Meta'):

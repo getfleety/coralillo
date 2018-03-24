@@ -1,92 +1,83 @@
 from coralillo import Engine, Model, fields
 from coralillo.errors import UnboundModelError
 from random import choice
-import unittest
+import pytest
 
 
-class EngineTestCase(unittest.TestCase):
+def test_create_engine():
+    eng1 = Engine(db=11)
+    eng2 = Engine(db=12)
 
-    def test_create_engine_with_url(self):
-        url = 'redis://localhost:6379/0'
+    class Dog(Model):
+        name = fields.Text()
 
-    def test_create_engine(self):
-        eng1 = Engine(db=11)
-        eng2 = Engine(db=12)
+        class Meta:
+            engine = eng1
 
-        class Dog(Model):
-            name = fields.Text()
+    class Cat(Model):
+        name = fields.Text()
 
-            class Meta:
-                engine = eng1
+        class Meta:
+            engine = eng2
 
-        class Cat(Model):
-            name = fields.Text()
+    doggo = Dog(name='doggo').save()
+    catto = Cat(name='catto').save()
 
-            class Meta:
-                engine = eng2
+    assert eng1.redis.exists('dog:{}:obj'.format(doggo.id))
+    assert not eng1.redis.exists('cat:{}:obj'.format(catto.id))
 
-        doggo = Dog(name='doggo').save()
-        catto = Cat(name='catto').save()
+    assert eng2.redis.exists('cat:{}:obj'.format(catto.id))
+    assert not eng2.redis.exists('dog:{}:obj'.format(doggo.id))
 
-        self.assertTrue(eng1.redis.exists('dog:{}:obj'.format(doggo.id)))
-        self.assertFalse(eng1.redis.exists('cat:{}:obj'.format(catto.id)))
+def test_set_engine_delayed():
+    class Foo(Model):
+        name = fields.Text()
 
-        self.assertTrue(eng2.redis.exists('cat:{}:obj'.format(catto.id)))
-        self.assertFalse(eng2.redis.exists('dog:{}:obj'.format(doggo.id)))
+    with pytest.raises(UnboundModelError):
+        Foo.get_engine()
 
-    def test_set_engine_delayed(self):
-        class Foo(Model):
-            name = fields.Text()
+    eng = Engine()
 
-        with self.assertRaises(UnboundModelError):
-            Foo.get_engine()
+    Foo.set_engine(eng)
 
-        eng = Engine()
+    assert Foo.get('de') is None
 
-        Foo.set_engine(eng)
+def test_unbound_models():
+    class Dog(Model):
+        name = fields.Text()
 
-        self.assertIsNone(Foo.get('de')) # Only possible if bound to engine
+    with pytest.raises(UnboundModelError):
+        Dog(mame='doggo').save()
 
-    def test_unbound_models(self):
-        class Dog(Model):
-            name = fields.Text()
+def test_register_lua_script():
+    eng = Engine(db=0)
 
-        with self.assertRaises(UnboundModelError):
-            Dog(mame='doggo').save()
+    eng.lua.register('my_script', 'return ARGV[1]')
 
-    def test_register_lua_script(self):
-        eng = Engine(db=0)
+    assert eng.lua.my_script is not None
+    assert eng.lua.my_script(args=[4]) == b'4'
 
-        eng.lua.register('my_script', 'return ARGV[1]')
+def test_can_replace_id_function():
+    def simple_ids():
+        return ''.join(choice('123456789abcdef') for c in range(11))
 
-        self.assertIsNotNone(eng.lua.my_script)
-        self.assertEqual(eng.lua.my_script(args=[4]), b'4')
+    simple_eng = Engine(id_function=simple_ids)
+    uuid_eng = Engine()
 
-    def test_can_replace_id_function(self):
-        def simple_ids():
-            return ''.join(choice('123456789abcdef') for c in range(11))
+    class SimpleDog(Model):
+        name = fields.Text()
 
-        simple_eng = Engine(id_function=simple_ids)
-        uuid_eng = Engine()
+        class Meta:
+            engine = simple_eng
 
-        class SimpleDog(Model):
-            name = fields.Text()
+    class UuidDog(Model):
+        name = fields.Text()
 
-            class Meta:
-                engine = simple_eng
+        class Meta:
+            engine = uuid_eng
 
-        class UuidDog(Model):
-            name = fields.Text()
+    simple_doggo = SimpleDog(name='doggo').save()
+    assert len(simple_doggo.id) == 11
 
-            class Meta:
-                engine = uuid_eng
-
-        simple_doggo = SimpleDog(name='doggo').save()
-        self.assertEqual(len(simple_doggo.id), 11)
-
-        uuid_doggo = UuidDog(name='doggo').save()
-        self.assertEqual(len(uuid_doggo.id), 32)
-
-
-if __name__ == '__main__':
-    unittest.main()
+    uuid_doggo = UuidDog(name='doggo').save()
+    assert len(uuid_doggo.id) == 32
