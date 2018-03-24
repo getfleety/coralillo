@@ -1,4 +1,6 @@
 from coralillo import Model, Form, BoundedModel, Engine, fields
+from coralillo.validation import validation_rule
+from coralillo.errors import InvalidFieldError
 
 # for model testing
 class Table(Model):
@@ -40,6 +42,29 @@ class Truck(Model):
 class ShipForm(Form):
     name = fields.Text()
     code = fields.Text()
+
+# for testing permissions
+class Bunny(BoundedModel):
+    name = fields.Text()
+
+    @classmethod
+    def prefix(cls):
+        return 'bound'
+
+# for testing validations
+class MyForm(Form):
+    field1 = fields.Text()
+    field2 = fields.Text()
+
+    @validation_rule
+    def enforce_fields(data):
+        if (data.field1 is None and data.field2 is None) or \
+            (data.field1 is not None and data.field2 is not None):
+            raise InvalidFieldError(field='field1')
+
+
+class MyModel(Model):
+    field1 = fields.Text(index=True, required=False, private=True)
 
 # For testing relationships
 class Pet(Model):
@@ -91,3 +116,6 @@ def bound_models(eng):
     Tenanted.set_engine(eng)
     User.set_engine(eng)
     Truck.set_engine(eng)
+    Bunny.set_engine(eng)
+    MyForm.set_engine(eng)
+    MyModel.set_engine(eng)

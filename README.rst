@@ -19,17 +19,11 @@ Installation
 Testing
 -------
 
-Runing the test suite:
+Since this project uses pytest is as easy as:
 
 .. code-block:: bash
 
-   $ python setup.py test
-
-Or you can run individual tests using builtin unittest API:
-
-.. code-block:: bash
-
-   $ python coralillo/tests/test_all.py [-f] [TestCaseClass[.test_function]]
+   $ pytest
 
 Deploy
 ------

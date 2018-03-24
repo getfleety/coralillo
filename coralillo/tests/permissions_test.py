@@ -1,122 +1,92 @@
 from coralillo import Model, BoundedModel, fields, Engine
-from coralillo.auth import PermissionHolder
-import unittest
+import pytest
 
-nrm = Engine()
+from .models import Bunny
 
+def test_allow_key(nrm, user):
+    user.allow('a')
 
-class User(Model, PermissionHolder):
-    name = fields.Text()
+    assert nrm.redis.exists('user:{}:allow'.format(user.id))
 
-    class Meta:
-        engine = nrm
+def test_add_permissions(nrm, user):
+    user.allow('a:b:c')
+    assert nrm.redis.sismember(user.allow_key(), 'a:b:c')
 
-class Pet(BoundedModel):
-    name = fields.Text()
+def test_add_ignores_when_has_parent(nrm, user):
+    user.allow('a')
+    user.allow('a:b')
+    user.allow('a:b:c')
 
-    class Meta:
-        engine = nrm
+    assert nrm.redis.sismember(user.allow_key(), 'a')
+    assert not nrm.redis.sismember(user.allow_key(), 'a:b')
+    assert not nrm.redis.sismember(user.allow_key(), 'a:b:c')
 
-    @classmethod
-    def prefix(cls):
-        return 'bound'
+    user.allow('foo:var')
+    user.allow('foo:var:log')
+    assert not nrm.redis.sismember(user.allow_key(), 'foo')
+    assert nrm.redis.sismember(user.allow_key(), 'foo:var')
+    assert not nrm.redis.sismember(user.allow_key(), 'foo:var:log')
 
+def test_add_deletes_lower(nrm, user):
+    user.allow('a:b/v')
+    user.allow('a/v')
 
-class PermissionTestCase(unittest.TestCase):
+    assert user.get_perms() == set(['a/v'])
 
-    def setUp(self):
-        nrm.lua.drop(args=['*'])
-        self.user = User(
-            name      = 'juan',
-        ).save()
-        self.allow_key = self.user.allow_key()
+def test_revoke_permission(nrm, user):
+    user.allow('a:b')
+    user.revoke('a:b')
 
-    def test_allow_key(self):
-        self.user.allow('a')
+    assert not nrm.redis.sismember(user.allow_key(), 'a:b')
 
-        self.assertTrue(nrm.redis.exists('user:{}:allow'.format(self.user.id)))
+def test_check_permission_inheritance(nrm, user):
+    user.allow('a:b')
 
-    def test_add_permissions(self):
-        self.user.allow('a:b:c')
-        self.assertTrue(nrm.redis.sismember(self.allow_key, 'a:b:c'))
+    assert user.is_allowed('a:b')
+    assert user.is_allowed('a:b:c')
 
-    def test_add_ignores_when_has_parent(self):
-        self.user.allow('a')
-        self.user.allow('a:b')
-        self.user.allow('a:b:c')
+    assert not user.is_allowed('a')
+    assert not user.is_allowed('a:d')
 
-        self.assertTrue(nrm.redis.sismember(self.allow_key, 'a'))
-        self.assertFalse(nrm.redis.sismember(self.allow_key, 'a:b'))
-        self.assertFalse(nrm.redis.sismember(self.allow_key, 'a:b:c'))
+def test_can_carry_restrict(nrm, user):
+    user.allow('org:fleet/view')
 
-        self.user.allow('foo:var')
-        self.user.allow('foo:var:log')
-        self.assertFalse(nrm.redis.sismember(self.allow_key, 'foo'))
-        self.assertTrue(nrm.redis.sismember(self.allow_key, 'foo:var'))
-        self.assertFalse(nrm.redis.sismember(self.allow_key, 'foo:var:log'))
+    assert user.is_allowed('org:fleet:somefleet/view')
 
-    def test_add_deletes_lower(self):
-        self.user.allow('a:b/v')
-        self.user.allow('a/v')
+def test_permission_key(nrm, user):
+    assert user.permission() == 'user:{}'.format(user.id)
+    assert user.permission(restrict='view') == 'user:{}/view'.format(user.id)
 
-        self.assertSetEqual(self.user.get_perms(), set(['a/v']))
+def test_minor_ignored_if_mayor(nrm, user):
+    user.allow('org:fleet/view')
+    user.allow('org:fleet:325234/view')
 
-    def test_revoke_permission(self):
-        self.user.allow('a:b')
-        self.user.revoke('a:b')
+    assert user.get_perms() == set(['org:fleet/view'])
 
-        self.assertFalse(nrm.redis.sismember(self.allow_key, 'a:b'))
+def test_perm_framework_needs_strings(nrm, user):
+    class User: pass
 
-    def test_check_permission_inheritance(self):
-        self.user.allow('a:b')
+    with pytest.raises(AssertionError):
+        user.allow(User)
 
-        self.assertTrue(self.user.is_allowed('a:b'))
-        self.assertTrue(self.user.is_allowed('a:b:c'))
+    with pytest.raises(AssertionError):
+        user.is_allowed(User)
 
-        self.assertFalse(self.user.is_allowed('a'))
-        self.assertFalse(self.user.is_allowed('a:d'))
+    with pytest.raises(AssertionError):
+        user.revoke(User)
 
-    def test_can_carry_restrict(self):
-        self.user.allow('org:fleet/view')
+def test_permission_function(nrm, user):
+    assert user.permission() == 'user:{}'.format(user.id)
+    assert user.permission('eat') == 'user:{}/eat'.format(user.id)
 
-        self.assertTrue(self.user.is_allowed('org:fleet:somefleet/view'))
+    bunny = Bunny(name='doggo').save()
+    assert bunny.permission() == 'bound:bunny:{}'.format(bunny.id)
+    assert bunny.permission('walk') == 'bound:bunny:{}/walk'.format(bunny.id)
 
-    def test_permission_key(self):
-        self.assertEqual(self.user.permission(), 'user:{}'.format(self.user.id))
-        self.assertEqual(self.user.permission(restrict='view'), 'user:{}/view'.format(self.user.id))
+def test_delete_user_deletes_permission_bag(nrm, user):
+    user.allow('foo')
 
-    def test_minor_ignored_if_mayor(self):
-        self.user.allow('org:fleet/view')
-        self.user.allow('org:fleet:325234/view')
+    assert nrm.redis.exists('user:{}:allow'.format(user.id))
 
-        self.assertSetEqual(self.user.get_perms(), set(['org:fleet/view']))
-
-    def test_perm_framework_needs_strings(self):
-        with self.assertRaises(AssertionError):
-            self.user.allow(User)
-
-        with self.assertRaises(AssertionError):
-            self.user.is_allowed(User)
-
-        with self.assertRaises(AssertionError):
-            self.user.revoke(User)
-
-    def test_permission_function(self):
-        self.assertEqual(self.user.permission(), 'user:{}'.format(self.user.id))
-        self.assertEqual(self.user.permission('eat'), 'user:{}/eat'.format(self.user.id))
-
-        pet = Pet(name='doggo').save()
-        self.assertEqual(pet.permission(), 'bound:pet:{}'.format(pet.id))
-        self.assertEqual(pet.permission('walk'), 'bound:pet:{}/walk'.format(pet.id))
-
-    def test_delete_user_deletes_permission_bag(self):
-        self.user.allow('foo')
-
-        self.assertTrue(nrm.redis.exists('user:{}:allow'.format(self.user.id)))
-
-        self.user.delete()
-        self.assertFalse(nrm.redis.exists('user:{}:allow'.format(self.user.id)))
-
-
-if __name__ == '__main__':
-    unittest.main()
+    user.delete()
+    assert not nrm.redis.exists('user:{}:allow'.format(user.id))

@@ -1,4 +1,3 @@
-import unittest
 from coralillo.datamodel import Location
 
 
