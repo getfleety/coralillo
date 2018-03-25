@@ -140,6 +140,38 @@ class Form:
         return cls.get_engine().redis
 
 
+class QuerySet:
+
+    def __init__(self, cls, iterator):
+        self.iterator = iterator
+        self.filters = []
+        self.cls = cls
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        for item in self.iterator:
+            obj = self.cls(item)
+            if self.matches_filters(obj):
+                return obj
+
+        raise StopIteration
+
+    def matches_filters(self, item):
+        for filt in self.filters:
+            if not filt(item):
+                return False
+
+        return True
+
+    def filter(self, **kwargs):
+        for key, value in kwargs:
+            pass
+
+        return self
+
+
 class Model(Form):
     '''
     Defines a model that comunicates to the Redis database
@@ -256,6 +288,14 @@ class Model(Form):
             )
 
         return obj
+
+    @classmethod
+    def q(cls, **kwargs):
+        ''' Creates an iterator over the members of this class that applies the
+        given filters and returns only the elements matching them '''
+        redis = cls.get_redis()
+
+        return QuerySet(cls, redis.sscan_iter(cls.members_key()))
 
     @classmethod
     def count(cls):

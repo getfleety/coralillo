@@ -1,3 +1,4 @@
+from collections import Iterable
 from .models import Pet, Person, Driver, Car
 
 
@@ -98,6 +99,33 @@ def test_querying_related(nrm):
 
     assert u1 in o1.proxy.drivers
     assert u2 not in o1.proxy.drivers
+
+def test_can_filter_related(nrm):
+    p = Person(name='Juan').save()
+
+    pets = [
+        Pet(name='bc').save(), # 0
+        Pet(name='bd').save(), # 1
+        Pet(name='cd').save(), # 2
+    ]
+
+    p.proxy.pets.set(pets)
+
+    assert isinstance(p.proxy.pets.filter(name__startswith='pa'), Iterable)
+
+    res = list(map(
+        lambda x:x.id,
+        p.proxy.pets.filter(name__startswith='b', name__endswith='d')
+    ))
+
+    assert res == [pets[1].id]
+
+    res = list(map(
+        lambda x:x.id,
+        p.proxy.pets.filter(name__startswith='b').filter(name__endswith='d')
+    ))
+
+    assert res == [pets[1].id]
 
 def test_foreign_key(nrm):
     owner = Person(name='John').save()
