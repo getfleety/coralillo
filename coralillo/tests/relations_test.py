@@ -111,18 +111,18 @@ def test_can_filter_related(nrm):
 
     p.proxy.pets.set(pets)
 
-    assert isinstance(p.proxy.pets.filter(name__startswith='pa'), Iterable)
+    assert isinstance(p.proxy.pets.q().filter(name__startswith='pa'), Iterable)
 
     res = list(map(
         lambda x:x.id,
-        p.proxy.pets.filter(name__startswith='b', name__endswith='d')
+        p.proxy.pets.q().filter(name__startswith='b', name__endswith='d')
     ))
 
     assert res == [pets[1].id]
 
     res = list(map(
         lambda x:x.id,
-        p.proxy.pets.filter(name__startswith='b').filter(name__endswith='d')
+        p.proxy.pets.q().filter(name__startswith='b').filter(name__endswith='d')
     ))
 
     assert res == [pets[1].id]

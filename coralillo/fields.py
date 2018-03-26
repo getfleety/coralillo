@@ -1,12 +1,13 @@
-from .hashing import make_password, is_hashed
-from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
-from .datamodel import debyte_string, debyte_hash
 from . import datamodel
-from importlib import import_module
+from .datamodel import debyte_string, debyte_hash
+from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
+from .hashing import make_password, is_hashed
 from .utils import to_pipeline
-import re
+from coralillo.queryset import QuerySet
+from importlib import import_module
 import datetime
 import json
+import re
 
 
 class Field:
@@ -628,7 +629,10 @@ class MultipleRelation(Relation):
             getattr(value.proxy, self.inverse).unrelate(self.obj, redis)
 
     def count(self):
-        raise NotImplementedError('count is not implemented for this subclass of MultipleRelation')
+        raise NotImplementedError('count is not implemented yet for this subclass of MultipleRelation')
+
+    def q(self, **kwargs):
+        raise NotImplementedError('q is not implemented yet for this subclass of MultipleRelation')
 
 
 class SetRelation(MultipleRelation):
@@ -661,6 +665,12 @@ class SetRelation(MultipleRelation):
         redis = type(self.obj).get_redis()
 
         return redis.scard(key)
+
+    def q(self):
+        cls = type(self.obj)
+        redis = cls.get_redis()
+
+        return QuerySet(self.model(), redis.sscan_iter(self.key()))
 
     def __contains__(self, item):
         if not isinstance(item, self.model()):
