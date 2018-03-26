@@ -1,6 +1,7 @@
+from collections import Iterable
 from coralillo.datamodel import debyte_string
 from coralillo.errors import ModelNotFoundError
-from .models import House, Table, Ship, Tenanted, SideWalk
+from .models import House, Table, Ship, Tenanted, SideWalk, Pet
 import pytest
 
 def test_create_user(nrm):
@@ -29,6 +30,39 @@ def test_retrieve_by_index(nrm):
 
     assert found_ship is not None
     assert titan == found_ship
+
+def test_filter(nrm):
+    with pytest.raises(AttributeError) as excinfo:
+        Pet.q().filter(legs__in=(3, 4))
+
+    assert str(excinfo.value) == 'Model Pet does not have field legs'
+
+    with pytest.raises(AttributeError) as excinfo:
+        Pet.q().filter(name__foo=True)
+
+    assert str(excinfo.value) == 'Filter foo does not exist'
+
+    pets = [
+        Pet(name='bc').save(), # 0
+        Pet(name='bd').save(), # 1
+        Pet(name='cd').save(), # 2
+    ]
+
+    assert isinstance(Pet.q(), Iterable)
+
+    res = list(map(
+        lambda x:x.id,
+        Pet.q().filter(name__startswith='b', name__endswith='d')
+    ))
+
+    assert res == [pets[1].id]
+
+    res = list(map(
+        lambda x:x.id,
+        Pet.q().filter(name__startswith='b').filter(name__endswith='d')
+    ))
+
+    assert res == [pets[1].id]
 
 def test_update_keep_index(nrm):
     ship = Ship(name='the ship', code='TS').save()

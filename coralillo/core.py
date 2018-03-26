@@ -4,6 +4,7 @@ from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
 from coralillo.utils import to_pipeline, snake_case, parse_embed
 from coralillo.auth import PermissionHolder
+from coralillo.queryset import QuerySet
 from coralillo import Engine
 from itertools import starmap
 import json
@@ -256,6 +257,14 @@ class Model(Form):
             )
 
         return obj
+
+    @classmethod
+    def q(cls, **kwargs):
+        ''' Creates an iterator over the members of this class that applies the
+        given filters and returns only the elements matching them '''
+        redis = cls.get_redis()
+
+        return QuerySet(cls, redis.sscan_iter(cls.members_key()))
 
     @classmethod
     def count(cls):
