@@ -32,6 +32,16 @@ def test_retrieve_by_index(nrm):
     assert titan == found_ship
 
 def test_filter(nrm):
+    with pytest.raises(AttributeError) as excinfo:
+        Pet.q().filter(legs__in=(3, 4))
+
+    assert str(excinfo.value) == 'Model Pet does not have field legs'
+
+    with pytest.raises(AttributeError) as excinfo:
+        Pet.q().filter(name__foo=True)
+
+    assert str(excinfo.value) == 'Filter foo does not exist'
+
     pets = [
         Pet(name='bc').save(), # 0
         Pet(name='bd').save(), # 1
