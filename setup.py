@@ -13,7 +13,7 @@ with open(path.join(here, 'README.rst')) as f:
 setup(
     name='coralillo',
 
-    version='0.7.0',
+    version='0.7.1',
 
     description='An Object-Redis Mapping',
     long_description=long_description,

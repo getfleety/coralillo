@@ -82,3 +82,9 @@ class QuerySet:
             self.filters.append(self.make_filter(fieldname, query_func, value))
 
         return self
+
+    def one(self):
+        return next(self)
+
+    def all(self):
+        return list(self)

@@ -64,6 +64,8 @@ def test_filter(nrm):
 
     assert res == [pets[1].id]
 
+    assert Pet.q().filter(name='bd').one() == pets[1]
+
 def test_update_keep_index(nrm):
     ship = Ship(name='the ship', code='TS').save()
 
