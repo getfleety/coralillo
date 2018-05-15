@@ -31,7 +31,7 @@ def parse_embed(embed_array):
     fields = {}
 
     for item in embed_array:
-        pieces = item.split('.')
+        pieces = item.split('.', maxsplit=1)
 
         if pieces[0] not in fields:
             fields[pieces[0]] = None

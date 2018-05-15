@@ -112,7 +112,16 @@ def test_include_three_levels():
             'cs': [{
                 '_type': 'c',
                 'id': c.id,
-                'attr': 'z',
+                'attr': c.attr,
+            }],
+        }],
+    }
+
+    assert a.to_json(include=['attr', 'bs.cs.id']) == {
+        'attr': 'z',
+        'bs': [{
+            'cs': [{
+                'id': c.id,
             }],
         }],
     }
