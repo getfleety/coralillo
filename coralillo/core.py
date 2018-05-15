@@ -405,10 +405,10 @@ class Model(Form):
         via an HTTP REST API '''
         json = dict()
 
-        if include is None or 'id' in include:
+        if include is None or 'id' in include or '*' in include:
             json['id'] = self.id
 
-        if include is None or '_type' in include:
+        if include is None or '_type' in include or '*' in include:
             json['_type'] = type(self).cls_key()
 
         def fieldfilter(fieldtuple):

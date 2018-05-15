@@ -137,6 +137,8 @@ def test_include_asterisc():
     c.proxy.b.set(b)
 
     assert a.to_json(include=['*', 'bs.cs.attr']) == {
+        '_type': 'a',
+        'id': a.id,
         'attr': 'z',
         'bs': [{
             'cs': [{
