@@ -237,3 +237,6 @@ def test_tree_index():
 
     s1.delete()
     assert Subscription.tree_match('key_name', 'a:b:c') == []
+
+def test_field_enum():
+    assert False, 'can use an enum field'
