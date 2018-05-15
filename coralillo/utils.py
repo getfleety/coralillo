@@ -25,6 +25,9 @@ def camelCase(string):
     return ''.join(s[0].upper()+s[1:] for s in string.split('_'))
 
 def parse_embed(embed_array):
+    if not embed_array:
+        return []
+
     fields = {}
 
     for item in embed_array:

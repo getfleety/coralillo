@@ -1,7 +1,7 @@
-from .models import Office, Employee
+from .models import Office, Employee, A, B, C
 
 
-def test_fields(nrm):
+def test_include_simplest(nrm):
     office = Office(
         name = 'Fleety',
         address = 'Springfield 132',
@@ -14,18 +14,19 @@ def test_fields(nrm):
         '_type': 'office',
     }
 
-    assert office.to_json(fields=['name']) == {
+    assert office.to_json(include=['name']) == {
         'name': 'Fleety',
     }
 
-    assert office.to_json(fields=['id', 'name']) == {
+    assert office.to_json(include=['id', 'name']) == {
         'id': office.id,
         'name': office.name,
     }
 
-    assert office.to_json(fields=['none']) == {}
+    assert office.to_json(include=['none']) == {}
 
-def test_embed(nrm):
+
+def test_incude(nrm):
     office = Office(
         name = 'Fleety',
         address = 'Springfield 132',
@@ -36,31 +37,23 @@ def test_embed(nrm):
     ).save()
     office.proxy.employees.set([employee])
 
-    assert office.to_json(embed=['employees']) == {
+    assert office.to_json(include=['id', 'employees']) == {
         'id': office.id,
-        'name': office.name,
-        'address': office.address,
         'employees': [employee.to_json()],
-        '_type': 'office',
     }
 
-    assert office.to_json(embed=['employees.name']) == {
+    assert office.to_json(include=['id', 'employees.name']) == {
         'id': office.id,
-        'name': office.name,
-        'address': office.address,
-        'employees': [employee.to_json(fields=['name'])],
-        '_type': 'office',
+        'employees': [employee.to_json(include=['name'])],
     }
 
-    assert office.to_json(embed=['employees.name', 'employees.id']) == {
+    assert office.to_json(include=['id', 'employees.name', 'employees.id']) == {
         'id': office.id,
-        'name': office.name,
-        'address': office.address,
-        'employees': [employee.to_json(fields=['name', 'id'])],
-        '_type': 'office',
+        'employees': [employee.to_json(include=['name', 'id'])],
     }
 
-def test_embed_foreignid_relation(nrm):
+
+def test_include_foreignid_relation(nrm):
     office = Office(
         name = 'Fleety',
         address = 'Springfield 132',
@@ -71,52 +64,55 @@ def test_embed_foreignid_relation(nrm):
     ).save()
     office.proxy.employees.set([employee])
 
-    assert employee.to_json(embed=['office']) == {
+    assert employee.to_json(include=['id', 'office']) == {
         'id': employee.id,
-        'name': employee.name,
-        'last_name': employee.last_name,
-        '_type': 'employee',
         'office': office.to_json(),
     }
 
-    assert employee.to_json(embed=['office.name']) == {
+    assert employee.to_json(include=['id', 'office.name']) == {
         'id': employee.id,
-        'name': employee.name,
-        'last_name': employee.last_name,
-        '_type': 'employee',
-        'office': office.to_json(fields=['name']),
+        'office': office.to_json(include=['name']),
     }
 
-    assert employee.to_json(embed=['office.name', 'office.id']) == {
+    assert employee.to_json(include=['id', 'office.name', 'office.id']) == {
         'id': employee.id,
-        'name': employee.name,
-        'last_name': employee.last_name,
-        '_type': 'employee',
-        'office': office.to_json(fields=['name', 'id']),
+        'office': office.to_json(include=['name', 'id']),
     }
 
     office.proxy.employees.remove(employee)
 
-    assert employee.to_json(embed=['office']) == {
+    assert employee.to_json(include=['id', 'office']) == {
         'id': employee.id,
-        'name': employee.name,
-        'last_name': employee.last_name,
-        '_type': 'employee',
         'office': None,
     }
 
-    assert employee.to_json(embed=['office.name']) == {
+    assert employee.to_json(include=['id', 'office.name']) == {
         'id': employee.id,
-        'name': employee.name,
-        'last_name': employee.last_name,
-        '_type': 'employee',
         'office': None,
     }
 
-    assert employee.to_json(embed=['office.name', 'office.id']) == {
+    assert employee.to_json(include=['id', 'office.name', 'office.id']) == {
         'id': employee.id,
-        'name': employee.name,
-        'last_name': employee.last_name,
-        '_type': 'employee',
         'office': None,
+    }
+
+
+def test_include_three_levels():
+    a = A(attr='z').save()
+
+    b = B(attr='z').save()
+    b.proxy.a.set(a)
+
+    c = C(attr='z').save()
+    c.proxy.b.set(b)
+
+    assert a.to_json(include=['attr', 'bs.cs']) == {
+        'attr': 'z',
+        'bs': [{
+            'cs': [{
+                '_type': 'c',
+                'id': c.id,
+                'attr': 'z',
+            }],
+        }],
     }

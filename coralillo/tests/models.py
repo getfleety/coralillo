@@ -94,6 +94,20 @@ class Office(Model):
     address = fields.Text()
     employees = fields.SetRelation(Employee, inverse='office')
 
+# for testing nested embedding
+class A(Model):
+    attr = fields.Text()
+    bs = fields.SetRelation('coralillo.tests.models.B', inverse='a')
+
+class B(Model):
+    attr = fields.Text()
+    a = fields.ForeignIdRelation(A, inverse='bs')
+    cs = fields.SetRelation('coralillo.tests.models.C', inverse='b')
+
+class C(Model):
+    attr = fields.Text()
+    b = fields.ForeignIdRelation(A, inverse='cs')
+
 def bound_models(eng):
     for name, cls in inspect.getmembers(sys.modules[__name__]):
         if inspect.isclass(cls):

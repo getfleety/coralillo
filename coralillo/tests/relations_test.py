@@ -21,7 +21,7 @@ def test_relation(nrm):
     same.proxy.cars.fill()
 
     assert same.cars[0].id == org.id
-    assert same.to_json(embed=['cars'])['cars'][0]['name'] == 'Testing Inc'
+    assert same.to_json(include=['cars'])['cars'][0]['name'] == 'Testing Inc'
 
 def test_delete_with_related(nrm):
     doggo = Pet(name='doggo').save()

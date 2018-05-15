@@ -400,22 +400,22 @@ class Model(Form):
 
         return self.fqn() + '/' + restrict
 
-    def to_json(self, *, fields=None, embed=None):
+    def to_json(self, *, include=None):
         ''' Serializes this model to a JSON representation so it can be sent
         via an HTTP REST API '''
         json = dict()
 
-        if fields is None or 'id' in fields:
+        if include is None or 'id' in include:
             json['id'] = self.id
 
-        if fields is None or '_type' in fields:
+        if include is None or '_type' in include:
             json['_type'] = type(self).cls_key()
 
         def fieldfilter(fieldtuple):
             return\
                 not fieldtuple[1].private and\
                 not isinstance(fieldtuple[1], Relation) and (
-                    fields is None or fieldtuple[0] in fields
+                    include is None or fieldtuple[0] in include
                 )
 
         json.update(dict(starmap(
@@ -426,24 +426,23 @@ class Model(Form):
             )
         )))
 
-        if embed:
-            for requested_relation in parse_embed(embed):
-                relation_name, subfields = requested_relation
+        for requested_relation in parse_embed(include):
+            relation_name, subfields = requested_relation
 
-                if not hasattr(self.proxy, relation_name):
-                    continue
+            if not hasattr(self.proxy, relation_name):
+                continue
 
-                relation = getattr(self.proxy, relation_name)
+            relation = getattr(self.proxy, relation_name)
 
-                if isinstance(relation, ForeignIdRelation):
-                    item = relation.get()
+            if isinstance(relation, ForeignIdRelation):
+                item = relation.get()
 
-                    if item is not None:
-                        json[relation_name] = item.to_json(fields=subfields)
-                    else:
-                        json[relation_name] = None
-                elif isinstance(relation, MultipleRelation):
-                    json[relation_name] = list(map(lambda o: o.to_json(fields=subfields), relation.get()))
+                if item is not None:
+                    json[relation_name] = item.to_json(include=subfields)
+                else:
+                    json[relation_name] = None
+            elif isinstance(relation, MultipleRelation):
+                json[relation_name] = list(map(lambda o: o.to_json(include=subfields), relation.get()))
 
         return json
 
