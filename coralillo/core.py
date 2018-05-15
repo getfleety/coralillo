@@ -412,10 +412,10 @@ class Model(Form):
             json['_type'] = type(self).cls_key()
 
         def fieldfilter(fieldtuple):
-            return\
-                not fieldtuple[1].private and\
+            return \
+                not fieldtuple[1].private and \
                 not isinstance(fieldtuple[1], Relation) and (
-                    include is None or fieldtuple[0] in include
+                    include is None or fieldtuple[0] in include or '*' in include
                 )
 
         json.update(dict(starmap(

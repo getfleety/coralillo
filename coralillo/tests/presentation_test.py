@@ -125,3 +125,22 @@ def test_include_three_levels():
             }],
         }],
     }
+
+
+def test_include_asterisc():
+    a = A(attr='z').save()
+
+    b = B(attr='z').save()
+    b.proxy.a.set(a)
+
+    c = C(attr='z').save()
+    c.proxy.b.set(b)
+
+    assert a.to_json(include=['*', 'bs.cs.attr']) == {
+        'attr': 'z',
+        'bs': [{
+            'cs': [{
+                'attr': c.attr,
+            }],
+        }],
+    }
