@@ -1,11 +1,19 @@
 language: python
 cache: pip
 python:
-  - "3.6"
-  - "3.5"
-  - "3.4"
+- '3.6'
+- '3.5'
+- '3.4'
 services:
-  - redis-server
+- redis-server
 install:
-  - pip install -e .
-script: "python setup.py test"
+- pip install -e .
+script: python setup.py test
+deploy:
+  provider: pypi
+  user: categulario
+  on:
+    tags: true
+  distributions: sdist bdist_wheel
+  password:
+    secure: ETy4KoWpfAxmV1sXNis0g/jbnAU/8Ae1BExTcn4Bj3tIUDDB/AMh9glKn9ipocNqAD6tPj+1vw8+IZUEdmEygb++KTzP9PK4gxywGe7SRkjKMLlQLfzL2ptna8dgXeF3vh+IM6XtAlAhUHpxcUUekFbjXLkX7daRCCteAbnbP3Zhz1onHHUXwozRfm2b6+0wnhW5A14yLs2uMqvEizhhS6/PbTkcwA7ps0db84ru6yAujiH7Tit+tJPDs5J00XsG3xjhGOGlO7I7z4uBJ8WX+M52yAUzgNHnu1E+2897CF4eyvurlIWEoa8PZv0SYfzonOOJy5G9OcwonnYbdsA2jbqS1Ol7FKVnDUmpTDfEPE3LRqaT+A3R1OYJGqP+c8l1vD0ZmCZKlc5GSkBPr5TzaaS9WtTMqzNBc/zcyC+M1EwcoEkf42kuLn81/q9yUULjFPzUpQ5HRo1mp6CFUZ2WDvXye+nqgtrfkk8YQqFwwFXUfNwNJ07XWGvBUTMZIguxEiH0KVqnNHe8bv8QT7NfFpX+QcQEBSJjgpKP3jALCA7nFLMyBRUiJM3WQ3o5Y59FSF079sVfCVb4Zin7Z2mWzQiI4d0JLjLbMkZZxBZ9AWe2VzEE9cHK+VPrvoRLnh9S8Lh3lETskP5+MXvMsMgKii8TgCT6lKIabK3Od8cgf1Q=
