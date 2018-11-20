@@ -10,10 +10,13 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
+with open(path.join(here, 'coralillo', 'version.txt')) as f:
+    version = f.read().strip()
+
 setup(
     name='coralillo',
 
-    version='0.8.1',
+    version=version,
 
     description='An Object-Redis Mapping',
     long_description=long_description,
@@ -54,7 +57,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=find_packages(),
 
-    package_data={'coralillo': ['lua/*.lua']},
+    package_data={'coralillo': ['lua/*.lua', 'version.txt']},
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's

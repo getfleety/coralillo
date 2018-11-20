@@ -10,3 +10,4 @@ _modules/
 .env*
 .tox/
 .pytest_cache/
+Pipfile*
