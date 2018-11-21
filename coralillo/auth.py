@@ -15,7 +15,10 @@ class PermissionHolder:
         pieces = objspec.split('/')
         restrict = pieces[1] if len(pieces) == 2 else ''
 
-        return engine.lua.allow(keys=[self.allow_key()], args=[pieces[0], restrict])
+        return engine.lua.allow(
+            keys=[self.allow_key()],
+            args=[pieces[0], restrict]
+        )
 
     def is_allowed(self, objspec):
         assert type(objspec) == str, 'objspec must be a string'
@@ -24,7 +27,10 @@ class PermissionHolder:
         pieces = objspec.split('/')
         restrict = pieces[1] if len(pieces) == 2 else ''
 
-        return engine.lua.is_allowed(keys=[self.allow_key()], args=[pieces[0], restrict])
+        return engine.lua.is_allowed(
+            keys=[self.allow_key()],
+            args=[pieces[0], restrict]
+        )
 
     def revoke(self, objspec):
         assert type(objspec) == str, 'objspec must be a string'

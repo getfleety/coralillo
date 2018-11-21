@@ -4,11 +4,11 @@ from .models import Pet, Person, Driver, Car
 
 def test_relation(nrm):
     org = Car(
-        name      = 'Testing Inc',
+        name='Testing Inc',
     ).save()
 
     user = Driver(
-        name      = 'Sam',
+        name='Sam',
     ).save()
     user.proxy.cars.set([org])
 
@@ -23,12 +23,13 @@ def test_relation(nrm):
     assert same.cars[0].id == org.id
     assert same.to_json(include=['cars'])['cars'][0]['name'] == 'Testing Inc'
 
+
 def test_delete_with_related(nrm):
     doggo = Pet(name='doggo').save()
     catto = Pet(name='catto').save()
 
     owner = Person(
-        name = 'John',
+        name='John',
     ).save()
     owner.proxy.pets.set([doggo, catto])
 
@@ -39,6 +40,7 @@ def test_delete_with_related(nrm):
 
     assert Pet.get(doggo.id) is None
     assert Pet.get(catto.id) is None
+
 
 def test_many_to_many_relationship(nrm):
     u1 = Driver(name='u1').save()
@@ -72,7 +74,7 @@ def test_many_to_many_relationship(nrm):
     assert len(o1.drivers) == 1
     assert len(o2.drivers) == 2
 
-    o2.drivers.sort(key=lambda x:x.name)
+    o2.drivers.sort(key=lambda x: x.name)
 
     assert o1.drivers[0].name == 'u1'
     assert o2.drivers[0].name == 'u1'
@@ -91,6 +93,7 @@ def test_many_to_many_relationship(nrm):
     assert len(o1.drivers) == 0
     assert len(o2.drivers) == 1
 
+
 def test_querying_related(nrm):
     o1 = Car(name='o1').save()
     u1 = Driver(name='u1').save()
@@ -100,13 +103,14 @@ def test_querying_related(nrm):
     assert u1 in o1.proxy.drivers
     assert u2 not in o1.proxy.drivers
 
+
 def test_can_filter_related(nrm):
     p = Person(name='Juan').save()
 
     pets = [
-        Pet(name='bc').save(), # 0
-        Pet(name='bd').save(), # 1
-        Pet(name='cd').save(), # 2
+        Pet(name='bc').save(),  # 0
+        Pet(name='bd').save(),  # 1
+        Pet(name='cd').save(),  # 2
     ]
 
     p.proxy.pets.set(pets)
@@ -114,18 +118,23 @@ def test_can_filter_related(nrm):
     assert isinstance(p.proxy.pets.q().filter(name__startswith='pa'), Iterable)
 
     res = list(map(
-        lambda x:x.id,
+        lambda x: x.id,
         p.proxy.pets.q().filter(name__startswith='b', name__endswith='d')
     ))
 
     assert res == [pets[1].id]
 
     res = list(map(
-        lambda x:x.id,
-        p.proxy.pets.q().filter(name__startswith='b').filter(name__endswith='d')
+        lambda x: x.id,
+        p.proxy.pets.q().filter(
+            name__startswith='b'
+        ).filter(
+            name__endswith='d'
+        )
     ))
 
     assert res == [pets[1].id]
+
 
 def test_foreign_key(nrm):
     owner = Person(name='John').save()
@@ -149,6 +158,7 @@ def test_foreign_key(nrm):
     assert type(owner.pets) == list
     assert len(owner.pets) == 0
 
+
 def test_foreign_key_inverse(nrm):
     pet = Pet(name='doggo').save()
     owner = Person(name='John').save()
@@ -163,6 +173,7 @@ def test_foreign_key_inverse(nrm):
     assert type(owner.pets) == list
     assert len(owner.pets) == 1
     assert owner.pets[0].id == pet.id
+
 
 def test_delete_relation(nrm):
     c1 = Car().save()
@@ -184,6 +195,7 @@ def test_delete_relation(nrm):
     assert d1 not in c1.proxy.drivers
     assert d1 in c2.proxy.drivers
 
+
 def test_get_relation(nrm):
     c1 = Car().save()
     c2 = Car().save()
@@ -194,10 +206,11 @@ def test_get_relation(nrm):
 
     cars = d1.proxy.cars.get()
 
-    orig = sorted([c1, c2], key=lambda c:c.id)
-    cars = sorted(cars, key=lambda c:c.id)
+    orig = sorted([c1, c2], key=lambda c: c.id)
+    cars = sorted(cars, key=lambda c: c.id)
 
     assert orig == cars
+
 
 def test_get_foreignid_relation(nrm):
     pet = Pet().save()

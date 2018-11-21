@@ -1,6 +1,8 @@
 from coralillo import datamodel
 from coralillo.datamodel import debyte_string, debyte_hash
-from coralillo.errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
+from coralillo.errors import MissingFieldError, InvalidFieldError
+from coralillo.errors import ReservedFieldError, NotUniqueFieldError
+from coralillo.errors import DeleteRestrictedError
 from coralillo.utils import to_pipeline
 from coralillo.queryset import QuerySet
 from importlib import import_module
@@ -14,21 +16,25 @@ class Field:
     ''' Defines a field of a model. Represents how to store this specific
     datatype in the redis database '''
 
-    def __init__(self, *, name=None, index=False, required=True, default=None, private=False, regex=None, forbidden=None, allowed=None, fillable=True):
-        # This field's value is mapped to the ID in a redis hash so you can Model.get_by(field, value)
-        self.index     = index
+    def __init__(self, *, name=None, index=False, required=True, default=None,
+                 private=False, regex=None, forbidden=None, allowed=None,
+                 fillable=True):
+        # This field's value is mapped to the ID in a redis hash so you can
+        # Model.get_by(field, value)
+        self.index = index
 
         # This field is required in validation
-        self.required  = required
+        self.required = required
 
         # This field's default value
-        self.default   = default
+        self.default = default
 
-        # This field's value is not published in the JSON representation of the object
-        self.private   = private
+        # This field's value is not published in the JSON representation of the
+        # object
+        self.private = private
 
         # A regular expresion that validates this field's value
-        self.regex     = regex
+        self.regex = regex
 
         # A set of forbidden values for this field
         self.forbidden = forbidden
@@ -37,11 +43,11 @@ class Field:
         self.allowed = allowed
 
         # This field can't be set via http
-        self.fillable  = fillable
+        self.fillable = fillable
 
         # This will be set later by the proxy
-        self.name      = name
-        self.obj       = None
+        self.name = name
+        self.obj = None
 
     def value_or_default(self, value):
         ''' Returns the given value or the specified default value for this
@@ -57,7 +63,7 @@ class Field:
     def validate_required(self, value):
         ''' Validates the given value agains this field's 'required' property
         '''
-        if self.required and (value is None or value==''):
+        if self.required and (value is None or value == ''):
             raise MissingFieldError(self.name)
 
     def init(self, value):
@@ -76,7 +82,8 @@ class Field:
 
     def prepare(self, value):
         ''' Prepare this field's value to insert in database '''
-        if value is None: return None
+        if value is None:
+            return None
 
         return str(value)
 
@@ -187,10 +194,13 @@ class TreeIndex(Field):
 class Hash(Text):
     ''' A value that should be stored as a hash, for example a password '''
 
-    def __init__(self, *, name=None, required=True, private=True, algorithm='pbkdf2_sha256'):
+    def __init__(self, *, name=None, required=True, private=True,
+                 algorithm='pbkdf2_sha256'):
         super().__init__(name=name, required=required, private=private)
 
-        assert algorithm in dir(hashes), 'Invalid algorithm: {}'.format(algorithm)
+        assert algorithm in dir(hashes), 'Invalid algorithm: {}'.format(
+            algorithm
+        )
 
         self.algorithm = algorithm
 
@@ -198,7 +208,8 @@ class Hash(Text):
         ''' hash passwords given in the constructor '''
         value = self.value_or_default(value)
 
-        if value is None: return None
+        if value is None:
+            return None
 
         return self.make_hash(value)
 
@@ -227,7 +238,8 @@ class Bool(Field):
     def validate(self, value, redis):
         value = self.value_or_default(value)
 
-        if value is None: return None
+        if value is None:
+            return None
 
         if type(value) == bool:
             return value
@@ -303,7 +315,8 @@ class Datetime(Field):
 
     def validate(self, value, redis):
         '''
-        Validates data obtained from a request in ISO 8061 and returns it in Datetime data type
+        Validates data obtained from a request in ISO 8061 and returns it in
+        Datetime data type
         '''
 
         value = self.value_or_default(value)
@@ -369,11 +382,7 @@ class Location(Field):
 
     def recover(self, data, redis):
         key = self.key()
-
-        try: # TODO change this once the GEO api is stable in redis-py
-            value = redis.geopos(key, self.obj.id)
-        except TypeError:
-            value = None
+        value = redis.geopos(key, self.obj.id)
 
         if not value:
             return None
@@ -398,7 +407,7 @@ class Location(Field):
             assert -90 < lat < 90
 
             return datamodel.Location(lon, lat)
-        except:
+        except (ValueError, AssertionError):
             raise InvalidFieldError(self.name)
 
     def key(self):
@@ -414,7 +423,7 @@ class Dict(Field):
 
         try:
             value = json.loads(value)
-        except json.decoder.JSONDecodeError as e:
+        except json.decoder.JSONDecodeError:
             raise InvalidFieldError(self.name)
 
         return value
@@ -453,22 +462,22 @@ class Dict(Field):
         return value
 
     def key(self):
-        return '{}:{}:dict_{}'.format(self.obj.cls_key(), self.obj.id, self.name)
+        return '{}:{}:dict_{}'.format(
+            self.obj.cls_key(), self.obj.id, self.name
+        )
 
 
 class Relation(Field):
 
     def __init__(self, model, *, private=False, on_delete=None, inverse=None):
         self.modelspec = model
-        self.private   = private
+        self.private = private
         self.on_delete = on_delete
-        self.inverse   = inverse
-        self.fillable  = False
+        self.inverse = inverse
+        self.fillable = False
 
     def model(self):
         if type(self.modelspec) == str:
-            from . import Model
-
             pieces = self.modelspec.split('.')
 
             return getattr(import_module('.'.join(pieces[:-1])), pieces[-1])
@@ -479,8 +488,10 @@ class Relation(Field):
 class ForeignIdRelation(Relation):
 
     def __init__(self, model, *, private=False, on_delete=None, inverse=None):
-        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
-        self.default   = None
+        super().__init__(
+            model, private=private, on_delete=on_delete, inverse=inverse
+        )
+        self.default = None
 
     def validate(self, value, redis):
         if value is None:
@@ -526,10 +537,13 @@ class ForeignIdRelation(Relation):
         getattr(self.obj.proxy, self.name).fill()
         item = getattr(self.obj, self.name)
 
-        if item is None: return
+        if item is None:
+            return
 
         if self.on_delete == 'restrict':
-            raise DeleteRestrictedError('attempt to delete with relations and restrict flag')
+            raise DeleteRestrictedError(
+                'attempt to delete with relations and restrict flag'
+            )
 
         if self.on_delete == 'cascade':
             item.delete()
@@ -552,7 +566,7 @@ class MultipleRelation(Relation):
         raise NotImplementedError('must be implemented in subclass')
 
     def set(self, value, *, commit=True):
-        key  = self.key()
+        key = self.key()
         redis = type(self.obj).get_redis()
         pipe = to_pipeline(redis)
 
@@ -604,7 +618,7 @@ class MultipleRelation(Relation):
         ''' Returns this relation '''
         redis = type(self.obj).get_redis()
         related = list(map(
-            lambda id : self.model().get(debyte_string(id)),
+            lambda id: self.model().get(debyte_string(id)),
             self.get_related_ids(redis, **kwargs)
         ))
 
@@ -617,7 +631,9 @@ class MultipleRelation(Relation):
         items = getattr(self.obj, self.name)
 
         if self.on_delete == 'restrict' and len(items) > 0:
-            raise DeleteRestrictedError('attempt to delete with relations and restrict flag')
+            raise DeleteRestrictedError(
+                'attempt to delete with relations and restrict flag'
+            )
 
         for item in items:
             if self.on_delete == 'cascade':
@@ -636,22 +652,31 @@ class MultipleRelation(Relation):
             getattr(value.proxy, self.inverse).unrelate(self.obj, redis)
 
     def count(self):
-        raise NotImplementedError('count is not implemented yet for this subclass of MultipleRelation')
+        raise NotImplementedError(
+            'count is not implemented yet for this subclass of '
+            'MultipleRelation'
+        )
 
     def q(self, **kwargs):
-        raise NotImplementedError('q is not implemented yet for this subclass of MultipleRelation')
+        raise NotImplementedError(
+            'q is not implemented yet for this subclass of MultipleRelation'
+        )
 
 
 class SetRelation(MultipleRelation):
     ''' A relationship with another model '''
 
     def __init__(self, model, *, private=False, on_delete=None, inverse=None):
-        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
-        self.default   = []
-        self.fillable  = False
+        super().__init__(
+            model, private=private, on_delete=on_delete, inverse=inverse
+        )
+        self.default = []
+        self.fillable = False
 
     def key(self):
-        return '{}:{}:srel_{}'.format(self.obj.cls_key(), self.obj.id, self.name)
+        return '{}:{}:srel_{}'.format(
+            self.obj.cls_key(), self.obj.id, self.name
+        )
 
     def relate(self, obj, redis):
         redis.sadd(self.key(), obj.id)
@@ -668,7 +693,7 @@ class SetRelation(MultipleRelation):
         return redis.smembers(key)
 
     def count(self):
-        key   = self.key()
+        key = self.key()
         redis = type(self.obj).get_redis()
 
         return redis.scard(key)
@@ -695,23 +720,28 @@ class SortedSetRelation(MultipleRelation):
     def __init__(self, model, sort_key, **kwargs):
         super().__init__(model, **kwargs)
         self.sort_key = sort_key
-        self.default   = []
-        self.fillable  = False
+        self.default = []
+        self.fillable = False
 
     def key(self):
-        return '{}:{}:zrel_{}'.format(self.obj.cls_key(), self.obj.id, self.name)
+        return '{}:{}:zrel_{}'.format(
+            self.obj.cls_key(), self.obj.id, self.name
+        )
 
     def relate(self, obj, redis):
-        field = getattr(self.model(), self.sort_key) # the field in the foreign model
+        # the field in the foreign model
+        field = getattr(self.model(), self.sort_key)
 
         redis.zadd(self.key(), {
             field.prepare(getattr(obj, self.sort_key)): obj.id,
         })
 
     def relate_all(self, value, redis):
-        field = getattr(self.model(), self.sort_key) # the field in the foreign model
+        # the field in the foreign model
+        field = getattr(self.model(), self.sort_key)
 
-        p = lambda v: int(field.prepare(getattr(v, self.sort_key)))
+        def p(v):
+            return int(field.prepare(getattr(v, self.sort_key)))
 
         redis.zadd(self.key(), *sum(([p(r), r.id] for r in value), []))
 
@@ -727,7 +757,7 @@ class SortedSetRelation(MultipleRelation):
         return redis.zrange(key, 0, -1)
 
     def count(self):
-        key   = self.key()
+        key = self.key()
         redis = type(self.obj).get_redis()
 
         return redis.zcard(key)

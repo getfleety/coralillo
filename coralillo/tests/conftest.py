@@ -4,6 +4,7 @@ import pytest
 
 from .models import bound_models
 
+
 @pytest.fixture
 def nrm():
     nrm = Engine()
@@ -14,6 +15,7 @@ def nrm():
 
     return nrm
 
+
 @pytest.fixture
 def user(nrm):
     class User(Model, PermissionHolder):
@@ -23,5 +25,5 @@ def user(nrm):
             engine = nrm
 
     return User(
-        name      = 'juan',
+        name='juan',
     ).save()

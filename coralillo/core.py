@@ -1,11 +1,12 @@
 from copy import copy
-from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
+from coralillo.fields import Field, Relation, MultipleRelation
+from coralillo.fields import ForeignIdRelation
 from coralillo.datamodel import debyte_hash, debyte_string
-from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
+from coralillo.errors import ValidationErrors, UnboundModelError, BadField
+from coralillo.errors import ModelNotFoundError
 from coralillo.utils import to_pipeline, snake_case, parse_embed
 from coralillo.auth import PermissionHolder
 from coralillo.queryset import QuerySet
-from coralillo import Engine
 from itertools import starmap
 import json
 import re
@@ -55,7 +56,7 @@ class Form:
     def __init__(self):
         # This allows fast queries for set relations
         self.proxy = Proxy(self)
-        self._old   = dict()
+        self._old = dict()
 
         for fieldname, field in self.proxy:
             setattr(
@@ -96,7 +97,8 @@ class Form:
         for fieldname in dir(cls):
             rule = getattr(cls, fieldname)
 
-            if hasattr(rule, '_is_validation_rule') and rule._is_validation_rule:
+            if hasattr(rule, '_is_validation_rule') and \
+                    rule._is_validation_rule:
                 try:
                     rule(obj)
                 except BadField as e:
@@ -120,13 +122,17 @@ class Form:
         try:
             return cls.Meta.engine
         except AttributeError:
-            raise UnboundModelError('The model {} is not bound to any engine'.format(cls))
+            raise UnboundModelError(
+                'The model {} is not bound to any engine'.format(cls)
+            )
 
     @classmethod
     def set_engine(cls, neweng):
         ''' Sets the given coralillo engine so the model uses it to communicate
         with the redis database '''
-        assert isinstance(neweng, Engine), 'Provided object must be of class Engine'
+        assert hasattr(
+            neweng, '_is_coralillo_engine'
+        ), 'Provided object must be of class Engine'
 
         if hasattr(cls, 'Meta'):
             cls.Meta.engine = neweng
@@ -355,7 +361,7 @@ class Model(Form):
         prefix = '{}:tree_{}'.format(cls.cls_key(), field)
         pieces = string.split(':')
 
-        ans =  redis.sunion(
+        ans = redis.sunion(
             prefix + ':' + ':'.join(pieces[0:i+1])
             for i in range(len(pieces))
         )
@@ -366,7 +372,7 @@ class Model(Form):
                 debyte_string,
                 ans
             )
-        ), key=lambda x:x.id)
+        ), key=lambda x: x.id)
 
     @classmethod
     def cls_key(cls):
@@ -415,7 +421,9 @@ class Model(Form):
             return \
                 not fieldtuple[1].private and \
                 not isinstance(fieldtuple[1], Relation) and (
-                    include is None or fieldtuple[0] in include or '*' in include
+                    include is None or
+                    fieldtuple[0] in include or
+                    '*' in include
                 )
 
         json.update(dict(starmap(
@@ -442,7 +450,10 @@ class Model(Form):
                 else:
                     json[relation_name] = None
             elif isinstance(relation, MultipleRelation):
-                json[relation_name] = list(map(lambda o: o.to_json(include=subfields), relation.get()))
+                json[relation_name] = list(map(
+                    lambda o: o.to_json(include=subfields),
+                    relation.get()
+                ))
 
         return json
 
@@ -487,7 +498,9 @@ class BoundedModel(Model):
 
     @classmethod
     def prefix(cls):
-        raise NotImplementedError('Bounded models must implement the prefix function')
+        raise NotImplementedError(
+            'Bounded models must implement the prefix function'
+        )
 
     @classmethod
     def cls_key(cls):

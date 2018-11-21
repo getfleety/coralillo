@@ -1,7 +1,7 @@
-from coralillo import Engine, Model, fields
 import json
 
 from .models import Something
+
 
 def test_create_sends_message(nrm):
     p = nrm.redis.pubsub(ignore_subscribe_messages=True)
@@ -28,6 +28,7 @@ def test_create_sends_message(nrm):
     }
 
     p.unsubscribe()
+
 
 def test_delete_sends_message(nrm):
     thing = Something(name='the thing', abbr='TFC').save()
@@ -56,6 +57,7 @@ def test_delete_sends_message(nrm):
     }
 
     p.unsubscribe()
+
 
 def test_update_sends_message(nrm):
     thing = Something(name='the thing', abbr='TFC').save()

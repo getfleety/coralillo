@@ -29,6 +29,7 @@ def test_create_engine():
     assert eng2.redis.exists('cat:{}:obj'.format(catto.id))
     assert not eng2.redis.exists('dog:{}:obj'.format(doggo.id))
 
+
 def test_set_engine_delayed():
     class Foo(Model):
         name = fields.Text()
@@ -42,12 +43,14 @@ def test_set_engine_delayed():
 
     assert Foo.get('de') is None
 
+
 def test_unbound_models():
     class Dog(Model):
         name = fields.Text()
 
     with pytest.raises(UnboundModelError):
         Dog(mame='doggo').save()
+
 
 def test_register_lua_script():
     eng = Engine(db=0)
@@ -56,6 +59,7 @@ def test_register_lua_script():
 
     assert eng.lua.my_script is not None
     assert eng.lua.my_script(args=[4]) == b'4'
+
 
 def test_can_replace_id_function():
     def simple_ids():

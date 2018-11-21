@@ -59,7 +59,9 @@ class QuerySet:
             elif query_func == 'endswith':
                 return value.endswith(expct_value)
 
-        actual_filter.__doc__ = '{} {} {}'.format('val', query_func, expct_value)
+        actual_filter.__doc__ = '{} {} {}'.format(
+            'val', query_func, expct_value
+        )
 
         return actual_filter
 
@@ -76,8 +78,10 @@ class QuerySet:
                     fieldname,
                 ))
 
-            if not query_func in FILTERS:
-                raise AttributeError('Filter {} does not exist'.format(query_func))
+            if query_func not in FILTERS:
+                raise AttributeError(
+                    'Filter {} does not exist'.format(query_func)
+                )
 
             self.filters.append(self.make_filter(fieldname, query_func, value))
 

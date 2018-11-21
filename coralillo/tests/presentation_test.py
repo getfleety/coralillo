@@ -3,8 +3,8 @@ from .models import Office, Employee, A, B, C
 
 def test_include_simplest(nrm):
     office = Office(
-        name = 'Fleety',
-        address = 'Springfield 132',
+        name='Fleety',
+        address='Springfield 132',
     ).save()
 
     assert office.to_json() == {
@@ -28,12 +28,12 @@ def test_include_simplest(nrm):
 
 def test_incude(nrm):
     office = Office(
-        name = 'Fleety',
-        address = 'Springfield 132',
+        name='Fleety',
+        address='Springfield 132',
     ).save()
     employee = Employee(
-        name = 'Juan',
-        last_name = 'Alduci',
+        name='Juan',
+        last_name='Alduci',
     ).save()
     office.proxy.employees.set([employee])
 
@@ -47,7 +47,9 @@ def test_incude(nrm):
         'employees': [employee.to_json(include=['name'])],
     }
 
-    assert office.to_json(include=['id', 'employees.name', 'employees.id']) == {
+    assert office.to_json(
+        include=['id', 'employees.name', 'employees.id']
+    ) == {
         'id': office.id,
         'employees': [employee.to_json(include=['name', 'id'])],
     }
@@ -55,12 +57,12 @@ def test_incude(nrm):
 
 def test_include_foreignid_relation(nrm):
     office = Office(
-        name = 'Fleety',
-        address = 'Springfield 132',
+        name='Fleety',
+        address='Springfield 132',
     ).save()
     employee = Employee(
-        name = 'Juan',
-        last_name = 'Alduci',
+        name='Juan',
+        last_name='Alduci',
     ).save()
     office.proxy.employees.set([employee])
 
