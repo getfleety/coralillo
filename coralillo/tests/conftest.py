@@ -15,12 +15,12 @@ def nrm():
     return nrm
 
 @pytest.fixture
-def user():
+def user(nrm):
     class User(Model, PermissionHolder):
         name = fields.Text()
 
         class Meta:
-            engine = nrm()
+            engine = nrm
 
     return User(
         name      = 'juan',

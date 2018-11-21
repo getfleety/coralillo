@@ -1,13 +1,13 @@
-from . import datamodel
-from .datamodel import debyte_string, debyte_hash
-from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
-from .hashing import make_password, is_hashed
-from .utils import to_pipeline
+from coralillo import datamodel
+from coralillo.datamodel import debyte_string, debyte_hash
+from coralillo.errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
+from coralillo.utils import to_pipeline
 from coralillo.queryset import QuerySet
 from importlib import import_module
 import datetime
 import json
 import re
+import passlib.hash as hashes
 
 
 class Field:
@@ -134,10 +134,14 @@ class Field:
         if self.index:
             key = self.key()
 
-            old = debyte_string(redis.hget(key, value))
+            if value is not None:
+                found = debyte_string(redis.hget(key, value))
+            else:
+                found = None
+
             old_value = getattr(self.obj, self.name)
 
-            if old is not None and old != self.obj.id:
+            if found is not None and found != self.obj.id:
                 raise NotUniqueFieldError(self.name)
             elif old_value != value:
                 self.obj._old[self.name] = old_value
@@ -183,35 +187,38 @@ class TreeIndex(Field):
 class Hash(Text):
     ''' A value that should be stored as a hash, for example a password '''
 
+    def __init__(self, *, name=None, required=True, private=True, algorithm='pbkdf2_sha256'):
+        super().__init__(name=name, required=required, private=private)
+
+        assert algorithm in dir(hashes), 'Invalid algorithm: {}'.format(algorithm)
+
+        self.algorithm = algorithm
+
     def init(self, value):
         ''' hash passwords given in the constructor '''
         value = self.value_or_default(value)
 
         if value is None: return None
 
-        if is_hashed(value):
-            return value
+        return self.make_hash(value)
 
-        return make_password(value)
+    def make_hash(self, value):
+        algo = getattr(hashes, self.algorithm)
+
+        return algo.hash(value)
 
     def prepare(self, value):
         ''' Prepare this field's value to insert in database '''
         if value is None:
             return None
 
-        if is_hashed(value):
-            return value
-
-        return make_password(value)
+        return self.make_hash(value)
 
     def validate(self, value, redis):
         ''' hash passwords given via http '''
         value = super().validate(value, redis)
 
-        if is_hashed(value):
-            return value
-
-        return make_password(value)
+        return self.make_hash(value)
 
 
 class Bool(Field):
@@ -581,7 +588,7 @@ class MultipleRelation(Relation):
     def prepare(self, value):
         return value
 
-    def init(self,value):
+    def init(self, value):
         proposed = self.value_or_default(value)
 
         if not proposed:

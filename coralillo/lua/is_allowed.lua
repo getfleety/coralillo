@@ -3,7 +3,7 @@ local allow_key = KEYS[1]
 local objspec = ARGV[1]
 local restrict = nil
 
-if ARGV[2] ~= 'None' then
+if ARGV[2] ~= '' then
     restrict = ARGV[2]
 end
 

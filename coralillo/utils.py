@@ -1,11 +1,11 @@
-from redis.client import BasePipeline
+from redis.client import Pipeline
 import re
 
 def to_pipeline(redis):
     ''' If the argument is a redis connection this function makes a redis
     pipeline from it. Otherwise it returns the object passed, so it ensures
     it is a pipeline '''
-    if isinstance(redis, BasePipeline):
+    if isinstance(redis, Pipeline):
         return redis
 
     return redis.pipeline()

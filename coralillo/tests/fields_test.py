@@ -1,6 +1,5 @@
 from coralillo import Engine, Model, datamodel
 from coralillo.fields import *
-from coralillo.hashing import check_password
 from datetime import datetime
 import time
 import os
@@ -36,6 +35,21 @@ def test_field_hash():
     assert field.validate('foo', 'field') != 'foo'
     assert field.recover({'field': None}, 'field') == None
     assert field.recover({'field': 'None'}, 'field') == None
+
+def test_field_hash_bcrypt():
+    field = Hash(name='field', algorithm='bcrypt')
+
+    value = field.init('foo')
+    assert value != 'foo'
+    assert value.startswith('$2b')
+
+    value = field.prepare('foo')
+    assert value!= 'foo'
+    assert value.startswith('$2b')
+
+    value = field.validate('foo', 'field')
+    assert value != 'foo'
+    assert value.startswith('$2b')
 
 def test_field_bool():
     field = Bool(name='field')
@@ -141,14 +155,6 @@ def test_field_location_none(nrm):
     item_rec = MyModel.get(item.id)
 
     assert item_rec.field is None
-
-def test_password_check():
-    user = User(
-        password  = PWD,
-    ).save()
-
-    assert check_password('123456', user.password)
-    assert not user.password == '123456'
 
 def test_empty_field_dict(nrm):
     class Dummy(Model):
