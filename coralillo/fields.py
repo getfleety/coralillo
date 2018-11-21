@@ -704,7 +704,9 @@ class SortedSetRelation(MultipleRelation):
     def relate(self, obj, redis):
         field = getattr(self.model(), self.sort_key) # the field in the foreign model
 
-        redis.zadd(self.key(), field.prepare(getattr(obj, self.sort_key)), obj.id)
+        redis.zadd(self.key(), {
+            field.prepare(getattr(obj, self.sort_key)): obj.id,
+        })
 
     def relate_all(self, value, redis):
         field = getattr(self.model(), self.sort_key) # the field in the foreign model

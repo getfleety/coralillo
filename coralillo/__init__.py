@@ -13,9 +13,9 @@ class Engine:
         try:
             url = kwargs.pop('url')
 
-            self.redis = redis.StrictRedis.from_url(url, **kwargs)
+            self.redis = redis.Redis.from_url(url, **kwargs)
         except:
-            self.redis = redis.StrictRedis(**kwargs)
+            self.redis = redis.Redis(**kwargs)
 
         self.id_function = id_function
 
