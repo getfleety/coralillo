@@ -58,6 +58,10 @@ def test_field_hash_bcrypt():
     assert value.startswith('$2b')
 
 
+def test_field_hash_old_password_schema():
+    assert False, 'use variable PWD declared above and try to login'
+
+
 def test_field_bool():
     field = Bool(name='field')
 
