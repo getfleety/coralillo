@@ -8,6 +8,7 @@ services:
 - redis-server
 install:
 - pip install -e .
+- pip install bcrypt
 script: python setup.py test
 deploy:
   provider: pypi
