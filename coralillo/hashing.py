@@ -67,9 +67,11 @@ def force_bytes(s, encoding='utf-8', strings_only=False, errors='strict'):
     else:
         return s.encode(encoding, errors)
 
+
 def constant_time_compare(val1, val2):
     """Return True if the two strings are equal, False otherwise."""
     return hmac.compare_digest(force_bytes(val1), force_bytes(val2))
+
 
 def get_random_string(length=12,
                       allowed_chars='abcdefghijklmnopqrstuvwxyz'
@@ -93,8 +95,10 @@ def get_random_string(length=12,
         )
         return ''.join(random.choice(allowed_chars) for i in range(length))
 
+
 def is_hashed(password):
-    return re.match('bcrypt\$\$[a-f0-9]{2}\$[0-9]+\$.{53}', password)
+    return re.match(r'bcrypt\$\$[a-f0-9]{2}\$[0-9]+\$.{53}', password)
+
 
 def check_password(password, encoded, setter=None, preferred='default'):
     """
