@@ -134,7 +134,7 @@ class Field:
         if self.index:
             key = self.key()
 
-            old = debyte_string(redis.hget(key, value))
+            old = debyte_string(redis.hget(key, value)) if value is not None else None
             old_value = getattr(self.obj, self.name)
 
             if old is not None and old != self.obj.id:

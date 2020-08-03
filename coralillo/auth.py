@@ -13,7 +13,7 @@ class PermissionHolder:
         engine = type(self).get_engine()
 
         pieces = objspec.split('/')
-        restrict = pieces[1] if len(pieces) == 2 else None
+        restrict = pieces[1] if len(pieces) == 2 else 'None'
 
         return engine.lua.allow(keys=[self.allow_key()], args=[pieces[0], restrict])
 
@@ -22,7 +22,7 @@ class PermissionHolder:
         engine = type(self).get_engine()
 
         pieces = objspec.split('/')
-        restrict = pieces[1] if len(pieces) == 2 else None
+        restrict = pieces[1] if len(pieces) == 2 else 'None'
 
         return engine.lua.is_allowed(keys=[self.allow_key()], args=[pieces[0], restrict])
 
