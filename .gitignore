@@ -11,3 +11,4 @@ _modules/
 .tox/
 .pytest_cache/
 Pipfile*
+.venv/

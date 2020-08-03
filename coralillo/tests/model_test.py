@@ -1,4 +1,4 @@
-from collections import Iterable
+from collections.abc import Iterable
 from coralillo.datamodel import debyte_string
 from coralillo.errors import ModelNotFoundError
 from .models import House, Table, Ship, Tenanted, SideWalk, Pet

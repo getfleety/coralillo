@@ -407,7 +407,7 @@ class Dict(Field):
 
         try:
             value = json.loads(value)
-        except json.decoder.JSONDecodeError as e:
+        except json.decoder.JSONDecodeError:
             raise InvalidFieldError(self.name)
 
         return value
@@ -418,9 +418,9 @@ class Dict(Field):
     def save(self, value, redis, *, commit=True):
         key = self.key()
 
-        if bool(value) is not False:
+        if value is not None:
             redis.delete(key)
-            redis.hmset(key, value)
+            redis.hset(key, self.name, json.dumps(value))
         else:
             redis.delete(key)
 
@@ -439,7 +439,7 @@ class Dict(Field):
         key = self.key()
 
         try:
-            value = debyte_hash(redis.hgetall(key))
+            value = json.loads(redis.hget(key, self.name))
         except TypeError:
             value = dict()
 
@@ -697,14 +697,19 @@ class SortedSetRelation(MultipleRelation):
     def relate(self, obj, redis):
         field = getattr(self.model(), self.sort_key) # the field in the foreign model
 
-        redis.zadd(self.key(), field.prepare(getattr(obj, self.sort_key)), obj.id)
+        redis.zadd(self.key(), {
+            field.prepare(getattr(obj, self.sort_key)): obj.id,
+        })
 
     def relate_all(self, value, redis):
         field = getattr(self.model(), self.sort_key) # the field in the foreign model
 
         p = lambda v: int(field.prepare(getattr(v, self.sort_key)))
 
-        redis.zadd(self.key(), *sum(([p(r), r.id] for r in value), []))
+        redis.zadd(self.key(), {
+            p(r): r.id
+            for r in value
+        })
 
     def unrelate(self, obj, redis):
         redis.zrem(self.key(), obj.id)

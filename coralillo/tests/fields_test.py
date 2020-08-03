@@ -1,6 +1,6 @@
 from coralillo import Engine, Model, datamodel
 from coralillo.fields import *
-from coralillo.hashing import check_password
+from coralillo.hashing import check_password, make_password
 from datetime import datetime
 import time
 import os
@@ -10,8 +10,6 @@ from .models import Truck, User, Subscription
 
 os.environ['TZ'] = 'UTC'
 time.tzset()
-
-PWD = 'bcrypt$$2b$12$gWQweaiLPJr2OHSPOshyQe3zmnSAPGv2pA.PwOIuxZ3ylvLMN7h6C'
 
 def test_field_text():
     field = Text(name='field', default='pollo')
@@ -144,11 +142,11 @@ def test_field_location_none(nrm):
 
 def test_password_check():
     user = User(
-        password  = PWD,
+        password  = make_password('123456'),
     ).save()
 
     assert check_password('123456', user.password)
-    assert not user.password == '123456'
+    assert user.password != '123456'
 
 def test_empty_field_dict(nrm):
     class Dummy(Model):

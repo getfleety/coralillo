@@ -7,7 +7,12 @@ Coralillo
    :alt: Build Status
 
 
-A redis ORM. This project is in active development, if you think it is useful contact me so we can talk about its usage, features and future of the project.
+A redis ORM.
+
+Notes
+-----
+
+Version 1.0 depends on redis >= 3.0.
 
 Installation
 ------------
