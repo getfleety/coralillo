@@ -35,7 +35,7 @@ def test_incude(nrm):
         name = 'Juan',
         last_name = 'Alduci',
     ).save()
-    office.proxy.employees.set([employee])
+    office.employees.set([employee])
 
     assert office.to_json(include=['id', 'employees']) == {
         'id': office.id,
@@ -62,7 +62,7 @@ def test_include_foreignid_relation(nrm):
         name = 'Juan',
         last_name = 'Alduci',
     ).save()
-    office.proxy.employees.set([employee])
+    office.employees.set([employee])
 
     assert employee.to_json(include=['id', 'office']) == {
         'id': employee.id,
@@ -79,7 +79,7 @@ def test_include_foreignid_relation(nrm):
         'office': office.to_json(include=['name', 'id']),
     }
 
-    office.proxy.employees.remove(employee)
+    office.employees.remove(employee)
 
     assert employee.to_json(include=['id', 'office']) == {
         'id': employee.id,
@@ -101,10 +101,10 @@ def test_include_three_levels():
     a = A(attr='z').save()
 
     b = B(attr='z').save()
-    b.proxy.a.set(a)
+    b.a = a
 
     c = C(attr='z').save()
-    c.proxy.b.set(b)
+    c.b = b
 
     assert a.to_json(include=['attr', 'bs.cs']) == {
         'attr': 'z',
@@ -131,10 +131,10 @@ def test_include_asterisc():
     a = A(attr='z').save()
 
     b = B(attr='z').save()
-    b.proxy.a.set(a)
+    b.a = a
 
     c = C(attr='z').save()
-    c.proxy.b.set(b)
+    c.b = b
 
     assert a.to_json(include=['*', 'bs.cs.attr']) == {
         '_type': 'a',

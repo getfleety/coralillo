@@ -14,92 +14,92 @@ time.tzset()
 def test_field_text():
     field = Text(name='field', default='pollo')
 
-    assert field.recover({'field': 'foo'}, 'field') == 'foo'
+    assert field.recover(None, {'field': 'foo'}, 'field') == 'foo'
     assert field.prepare('foo') == 'foo'
-    assert field.validate(None, 'field') == 'pollo'
-    assert field.recover({'field': ''}, 'field') == ''
-    assert field.recover({'field': None}, 'field') == None
-    assert field.recover({'field': 'None'}, 'field') == None
+    assert field.validate(None, None, 'field') == 'pollo'
+    assert field.recover(None, {'field': ''}, 'field') == ''
+    assert field.recover(None, {'field': None}, 'field') == None
+    assert field.recover(None, {'field': 'None'}, 'field') == None
 
 def test_field_text_validate():
     field = Text(name='field')
 
     with pytest.raises(MissingFieldError):
-        field.validate('', None)
+        field.validate(None, '', None)
 
 def test_field_hash():
     field = Hash(name='field')
 
-    assert field.recover({'field': 'foo'}, 'field') == 'foo'
-    assert field.validate('foo', 'field') != 'foo'
-    assert field.recover({'field': None}, 'field') == None
-    assert field.recover({'field': 'None'}, 'field') == None
+    assert field.recover(None, {'field': 'foo'}, 'field') == 'foo'
+    assert field.validate(None, 'foo', 'field') != 'foo'
+    assert field.recover(None, {'field': None}, 'field') == None
+    assert field.recover(None, {'field': 'None'}, 'field') == None
 
 def test_field_bool():
     field = Bool(name='field')
 
-    assert field.recover({'field': 'True'}, 'field') == True
-    assert field.recover({'field': 'False'}, 'field') == False
+    assert field.recover(None, {'field': 'True'}, 'field') == True
+    assert field.recover(None, {'field': 'False'}, 'field') == False
     assert field.prepare(True) == 'True'
     assert field.prepare(False) == 'False'
-    assert field.recover({'field': None}, 'field') == None
-    assert field.recover({'field': 'None'}, 'field') == None
+    assert field.recover(None, {'field': None}, 'field') == None
+    assert field.recover(None, {'field': 'None'}, 'field') == None
 
-    assert field.validate('true', 'field') == True
-    assert field.validate('false', 'field') == False
-    assert field.validate('1', 'field') == True
-    assert field.validate('0', 'field') == False
-    assert field.validate('', 'field') == False
+    assert field.validate(None, 'true', 'field') == True
+    assert field.validate(None, 'false', 'field') == False
+    assert field.validate(None, '1', 'field') == True
+    assert field.validate(None, '0', 'field') == False
+    assert field.validate(None, '', 'field') == False
 
 def test_field_int():
     field = Integer(name='field')
 
-    assert field.recover({'field': '35'}, 'field') == 35
-    assert field.recover({'field': '0'}, 'field') == 0
-    assert field.recover({'field': ''}, 'field') == None
-    assert field.recover({'field': None}, 'field') == None
-    assert field.recover({'field': 'None'}, 'field') == None
+    assert field.recover(None, {'field': '35'}, 'field') == 35
+    assert field.recover(None, {'field': '0'}, 'field') == 0
+    assert field.recover(None, {'field': ''}, 'field') == None
+    assert field.recover(None, {'field': None}, 'field') == None
+    assert field.recover(None, {'field': 'None'}, 'field') == None
 
     assert field.prepare(35) == '35'
     assert field.prepare(0) == '0'
 
-    assert field.validate(0, 'field') == 0
-    assert field.validate('0', 'field') == 0
+    assert field.validate(None, 0, 'field') == 0
+    assert field.validate(None, '0', 'field') == 0
 
     with pytest.raises(MissingFieldError):
-        field.validate('', 'field')
+        field.validate(None, '', 'field')
 
     with pytest.raises(InvalidFieldError):
-        field.validate('pollo', 'field')
+        field.validate(None, 'pollo', 'field')
 
 def test_field_int_no_required():
     field = Integer(name='field', required=False)
 
-    assert field.validate(None, 'field') == None
-    assert field.validate('', 'field') == None
+    assert field.validate(None, None, 'field') == None
+    assert field.validate(None, '', 'field') == None
 
 def test_field_float():
     field = Float(name='field')
 
-    assert field.recover({'field': '3.14'}, 'field') == 3.14
-    assert field.recover({'field': '0'}, 'field') == 0.0
-    assert field.recover({'field': ''}, 'field') == None
-    assert field.recover({'field': None}, 'field') == None
-    assert field.recover({'field': 'None'}, 'field') == None
+    assert field.recover(None, {'field': '3.14'}, 'field') == 3.14
+    assert field.recover(None, {'field': '0'}, 'field') == 0.0
+    assert field.recover(None, {'field': ''}, 'field') == None
+    assert field.recover(None, {'field': None}, 'field') == None
+    assert field.recover(None, {'field': 'None'}, 'field') == None
 
     assert field.prepare(3.14) == '3.14'
     assert field.prepare(0.0) == '0.0'
 
-    assert field.validate(0, 'field') == 0
-    assert field.validate('0', 'field') == 0
+    assert field.validate(None, 0, 'field') == 0
+    assert field.validate(None, '0', 'field') == 0
 
 def test_field_date():
     field = Datetime(name='field')
 
-    assert field.recover({'field': '1499794899'}, 'field') == datetime(2017, 7, 11, 17, 41, 39)
-    assert field.recover({'field': ''}, 'field') == None
-    assert field.recover({'field': None}, 'field') == None
-    assert field.recover({'field': 'None'}, 'field') == None
+    assert field.recover(None, {'field': '1499794899'}, 'field') == datetime(2017, 7, 11, 17, 41, 39)
+    assert field.recover(None, {'field': ''}, 'field') == None
+    assert field.recover(None, {'field': None}, 'field') == None
+    assert field.recover(None, {'field': 'None'}, 'field') == None
     assert field.prepare(datetime(2017, 7, 11, 17, 41, 39)) == '1499794899'
 
 def test_field_location(nrm):

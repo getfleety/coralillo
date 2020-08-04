@@ -11,41 +11,12 @@ import json
 import re
 
 
-class Proxy:
-    ''' this allows to access the Model's fields easily '''
-
-    def __init__(self, instance):
-        self.model = type(instance)
-        self.instance = instance
-
-    def __getattr__(self, name):
-        field = copy(getattr(self.model, name))
-
-        field.name = name
-        field.obj = self.instance
-
-        return field
-
-    def __iter__(self):
-        def add_attrs(ft):
-            f = copy(ft[1])
-            f.name = ft[0]
-            f.obj = self.instance
-            return (ft[0], f)
-
-        return map(
-            add_attrs,
-            filter(
-                lambda ft: isinstance(ft[1], Field),
-                map(
-                    lambda name: (name, getattr(self.model, name)),
-                    filter(
-                        lambda name: not name.startswith('_'),
-                        dir(self.model)
-                    )
-                )
-            )
-        )
+def get_fields(cls):
+    all_fields = dir(cls)
+    not_private = filter(lambda name: not name.startswith('_'), all_fields)
+    name_field_tuples = map(lambda name: (name, getattr(cls, name)), not_private)
+    only_field_types = filter(lambda ft: isinstance(ft[1], Field), name_field_tuples)
+    return only_field_types
 
 
 class Form:
@@ -54,10 +25,9 @@ class Form:
 
     def __init__(self):
         # This allows fast queries for set relations
-        self.proxy = Proxy(self)
         self._old   = dict()
 
-        for fieldname, field in self.proxy:
+        for fieldname, field in get_fields(type(self)):
             setattr(
                 self,
                 fieldname,
@@ -76,12 +46,12 @@ class Form:
         redis = cls.get_redis()
 
         # Check the fields
-        for fieldname, field in obj.proxy:
+        for fieldname, field in get_fields(cls):
             if not field.fillable:
                 value = field.default
             else:
                 try:
-                    value = field.validate(kwargs.get(fieldname), redis)
+                    value = field.validate(obj, kwargs.get(fieldname), redis)
                 except BadField as e:
                     errors.append(e)
                     continue
@@ -112,7 +82,7 @@ class Form:
     def __str__(self):
         return '<{} {}>'.format(type(self).__name__, ' '.join(starmap(
             lambda fn, f: '{}={}'.format(fn, repr(getattr(self, fn))),
-            self.proxy,
+            get_fields(type(self)),
         )))
 
     @classmethod
@@ -154,7 +124,7 @@ class Model(Form):
         self.id = id if id else self.get_engine().id_function()
         self._persisted = False
 
-        for fieldname, field in self.proxy:
+        for fieldname, field in get_fields(type(self)):
             value = field.init(kwargs.get(fieldname))
 
             setattr(
@@ -197,7 +167,7 @@ class Model(Form):
         redis = type(self).get_redis()
         errors = ValidationErrors()
 
-        for fieldname, field in self.proxy:
+        for fieldname, field in get_fields(type(self)):
             if not field.fillable:
                 continue
 
@@ -207,7 +177,7 @@ class Model(Form):
                 continue
 
             try:
-                value = field.validate(kwargs.get(fieldname), redis)
+                value = field.validate(self, kwargs.get(fieldname), redis)
             except BadField as e:
                 errors.append(e)
                 continue
@@ -247,8 +217,8 @@ class Model(Form):
 
         data = debyte_hash(redis.hgetall(key))
 
-        for fieldname, field in obj.proxy:
-            value = field.recover(data, redis)
+        for fieldname, field in get_fields(cls):
+            value = field.recover(obj, data, redis)
 
             setattr(
                 obj,
@@ -284,7 +254,7 @@ class Model(Form):
 
         data = debyte_hash(redis.hgetall(key))
 
-        for fieldname, field in self.proxy:
+        for fieldname, field in get_fields(type(self)):
             value = field.recover(data, redis)
 
             setattr(
@@ -422,27 +392,19 @@ class Model(Form):
             lambda fn, f: (fn, f.to_json(getattr(self, fn))),
             filter(
                 fieldfilter,
-                self.proxy
+                get_fields(type(self))
             )
         )))
 
-        for requested_relation in parse_embed(include):
-            relation_name, subfields = requested_relation
-
-            if not hasattr(self.proxy, relation_name):
+        for relation_name, subfields in parse_embed(include):
+            if not hasattr(type(self), relation_name):
                 continue
 
-            relation = getattr(self.proxy, relation_name)
+            if not isinstance(getattr(type(self), relation_name), MultipleRelation):
+                continue
 
-            if isinstance(relation, ForeignIdRelation):
-                item = relation.get()
-
-                if item is not None:
-                    json[relation_name] = item.to_json(include=subfields)
-                else:
-                    json[relation_name] = None
-            elif isinstance(relation, MultipleRelation):
-                json[relation_name] = list(map(lambda o: o.to_json(include=subfields), relation.get()))
+            relation = getattr(self, relation_name)
+            json[relation_name] = list(map(lambda o: o.to_json(include=subfields), relation.all()))
 
         return json
 
@@ -462,8 +424,8 @@ class Model(Form):
         to properly delete special cases '''
         redis = type(self).get_redis()
 
-        for fieldname, field in self.proxy:
-            field.delete(redis)
+        for fieldname, field in get_fields(type(self)):
+            field.delete(self, redis)
 
         redis.delete(self.key())
         redis.srem(type(self).members_key(), self.id)
