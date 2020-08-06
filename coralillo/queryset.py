@@ -2,6 +2,7 @@ from coralillo.datamodel import debyte_string
 
 # these return false if the value is null
 NULL_AFFECTED_FILTERS = ['lt', 'lte', 'gt', 'gte', 'startswith', 'endswith']
+
 # these ones don't give a shit about null values
 FILTERS = ['eq', 'ne'] + NULL_AFFECTED_FILTERS
 

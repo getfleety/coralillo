@@ -49,7 +49,7 @@ class Field:
             return self
 
         if isinstance(self, MultipleRelation):
-            return RelationManager
+            return self.manager(instance)
 
         return instance.__dict__[self.name]
 
@@ -478,9 +478,6 @@ class Relation(Field):
 
         return self.modelspec
 
-    def save(self, instance, value, redis):
-        raise NotImplementedError()
-
 
 class ForeignIdRelation(Relation):
 
@@ -557,33 +554,21 @@ class ForeignIdRelation(Relation):
         return self.model().get(value)
 
 
-class MultipleRelation(Relation):
+class RelatedManager:
 
-    def relate_all(self, value, pipe):
-        raise NotImplementedError('must be implemented in subclass')
+    def __init__(self, key, redis):
+        self.key = key
+        self.redis = redis
 
-    def set(self, value, self_obj, *, commit=True):
-        assert False, "rethink this API and the commit=True parameter"
-        key  = self.key(instance)
-        redis = type(self_obj).get_redis()
-        pipe = to_pipeline(redis)
+    def set(self, value):
+        pipe = self.redis.pipeline()
 
-        pipe.delete(key)
+        self._clear(pipe)
 
-        if type(value) != list or len(value) == 0:
-            setattr(self_obj, self.name, [])
-            return
+        for obj in value:
+            self._relate(obj, pipe)
 
-        self.relate_all(value, pipe)
-
-        for related in value:
-            if self.inverse:
-                getattr(related.proxy, self.inverse).relate(self_obj, pipe)
-
-        if commit:
-            pipe.execute()
-
-        setattr(self_obj, self.name, value)
+        pipe.execute()
 
     def add(self, value, self_obj):
         redis = type(self_obj).get_redis()
@@ -592,20 +577,6 @@ class MultipleRelation(Relation):
 
         if self.inverse:
             getattr(value.proxy, self.inverse).relate(self_obj, redis)
-
-    def recover(self, instance, data, redis):
-        ''' Don't read the database by default '''
-        return []
-
-    def prepare(self, value):
-        return value
-
-    def init(self,value):
-        proposed = self.value_or_default(value)
-
-        if not proposed:
-            return []
-        return proposed
 
     def all(self, **kwargs):
         ''' Returns this relation '''
@@ -617,7 +588,7 @@ class MultipleRelation(Relation):
 
         return related
 
-    def delete(self, instance, redis):
+    def remove(self, instance, redis):
         key = self.key(instance)
 
         getattr(self_obj.proxy, self.name).fill()
@@ -645,28 +616,28 @@ class MultipleRelation(Relation):
     def count(self):
         raise NotImplementedError('count is not implemented yet for this subclass of MultipleRelation')
 
-    def q(self, **kwargs):
-        raise NotImplementedError('q is not implemented yet for this subclass of MultipleRelation')
+    def q(self):
+        raise NotImplementedError('q is not implemented for this subclass os MultipleRelation')
+
+    def create(self, **kwargs):
+        ''' Creates a new instance of the related model and relates it to the
+        current model through this field '''
+        raise NotImplementedError()
+
+    def _clear(self, pipeline):
+        raise NotImplementedError()
+
+    def clear(self):
+        ''' Clears all the relations of this field to another model '''
+        pipe = self.redis.pipeline()
+        self.clear(pipeline)
+        pipe.execute()
 
 
-class SetRelation(MultipleRelation):
-    ''' A relationship with another model '''
+class SetRelationManager(RelatedManager):
 
-    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
-        super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
-        self.default   = []
-        self.fillable  = False
-
-    def key(self):
-        return '{}:{}:srel_{}'.format(self_obj.cls_key(), self_obj.id, self.name)
-
-    def save(self, instance, value, redis):
-        for item in value:
-            assert type(item) == self.modelspec
-
-        for item in value:
-            item.save(trigger_inverse=False)
-            redis.sadd(self.key(instance), item.id)
+    def _clear(self, pipeline):
+        pass
 
     def relate(self, obj, redis):
         redis.sadd(self.key(instance), obj.id)
@@ -688,8 +659,8 @@ class SetRelation(MultipleRelation):
 
         return redis.scard(key)
 
-    def q(self):
-        cls = type(self_obj)
+    def q(self, instance):
+        cls = type(instance)
         redis = cls.get_redis()
 
         return QuerySet(self.model(), redis.sscan_iter(self.key(instance)))
@@ -703,18 +674,7 @@ class SetRelation(MultipleRelation):
         return redis.sismember(self.key(instance), item.id)
 
 
-class SortedSetRelation(MultipleRelation):
-    ''' A relationship with another model that ensures the same ordering every
-    time '''
-
-    def __init__(self, model, sort_key, **kwargs):
-        super().__init__(model, **kwargs)
-        self.sort_key = sort_key
-        self.default   = []
-        self.fillable  = False
-
-    def key(self):
-        return '{}:{}:zrel_{}'.format(self_obj.cls_key(), self_obj.id, self.name)
+class SortedSetRelationManager(RelatedManager):
 
     def relate(self, obj, redis):
         field = getattr(self.model(), self.sort_key) # the field in the foreign model
@@ -757,3 +717,35 @@ class SortedSetRelation(MultipleRelation):
         redis = type(self_obj).get_redis()
 
         return redis.zscore(self.key(instance), item.id) is not None
+
+
+class MultipleRelation(Relation):
+    ''' Indicates that this field can associate with multiple objects of some other class '''
+
+    def manager(self):
+        raise NotImplementedError('Must be implemented in subclass')
+
+
+class SetRelation(MultipleRelation):
+    ''' A relationship with another model where order doesn't matter '''
+
+    def key(self, instance):
+        return '{}:{}:srel_{}'.format(instance.cls_key(), instance.id, self.name)
+
+    def manager(self, instance):
+        return SetRelationManager(self.key(instance), instance.get_redis())
+
+
+class SortedSetRelation(MultipleRelation):
+    ''' A relationship with another model that ensures the same ordering every
+    time '''
+
+    def __init__(self, model, sort_key, **kwargs):
+        super().__init__(model, **kwargs)
+        self.sort_key = sort_key
+
+    def key(self, instance):
+        return '{}:{}:zrel_{}'.format(instance.cls_key(), instance.id, self.name)
+
+    def manager(self, instance):
+        return SortedSetRelationManager(self.key(instance), instance.get_redis())

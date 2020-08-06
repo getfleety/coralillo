@@ -19,6 +19,10 @@ def get_fields(cls):
     return only_field_types
 
 
+def get_no_relation_fields(cls):
+    return filter(lambda ft: not isinstance(ft[1], MultipleRelation), get_fields(cls))
+
+
 class Form:
     ''' Parent class of the Model class, defines validation and other useful
     functions. '''
@@ -124,7 +128,7 @@ class Model(Form):
         self.id = id if id else self.get_engine().id_function()
         self._persisted = False
 
-        for fieldname, field in get_fields(type(self)):
+        for fieldname, field in get_no_relation_fields(type(self)):
             value = field.init(kwargs.get(fieldname))
 
             setattr(
@@ -141,9 +145,8 @@ class Model(Form):
 
         pipe.hset(self.key(), 'id', self.id)
 
-        for fieldname, field in self.proxy:
-            if not isinstance(field, Relation):
-                field.save(getattr(self, fieldname), pipe, commit=False)
+        for fieldname, field in get_fields(type(self)):
+            field.save(self, getattr(self, fieldname), pipe)
 
         pipe.sadd(type(self).members_key(), self.id)
 
@@ -384,7 +387,7 @@ class Model(Form):
         def fieldfilter(fieldtuple):
             return \
                 not fieldtuple[1].private and \
-                not isinstance(fieldtuple[1], Relation) and (
+                not isinstance(fieldtuple[1], MultipleRelation) and (
                     include is None or fieldtuple[0] in include or '*' in include
                 )
 
