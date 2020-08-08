@@ -472,7 +472,7 @@ def model_from_spec(modelspec):
 
 class Relation(Field):
 
-    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+    def __init__(self, model, *, private=False, on_delete='set_null', inverse=None):
         self.index = False
         self.modelspec = model
         self.private = private
@@ -486,7 +486,7 @@ class Relation(Field):
 
 class ForeignIdRelation(Relation):
 
-    def __init__(self, model, *, private=False, on_delete=None, inverse=None):
+    def __init__(self, model, *, private=False, on_delete='set_null', inverse=None):
         super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
         self.default = None
 
@@ -506,32 +506,6 @@ class ForeignIdRelation(Relation):
             assert type(value) == model_from_spec(self.modelspec)
             redis.hset(instance.key(), self.name, value.id)
 
-    def _unrelate(self, self_obj, obj, redis):
-        redis.hdel(self_obj.key(), self.name, obj.id)
-
-    def set(self, self_obj, value, *, commit=True):
-        redis = type(self_obj).get_redis()
-        getattr(self_obj.proxy, self.name).fill()
-
-        prev = getattr(self_obj, self.name)
-
-        if prev is not None:
-            getattr(prev.proxy, self.inverse)._unrelate(self_obj, redis)
-
-        if value is None:
-            redis.hdel(self_obj.key(), self.name)
-            setattr(self_obj, self.name, None)
-            return
-
-        redis.hset(self_obj.key(), self.name, value.id)
-
-        related = value
-
-        if self.inverse:
-            getattr(related, self.inverse)._relate(self_obj, redis)
-
-        setattr(self_obj, self.name, value)
-
     def _delete(self, instance, redis):
         item = getattr(instance, self.name).get()
 
@@ -544,7 +518,7 @@ class ForeignIdRelation(Relation):
         if self.on_delete == 'cascade':
             item.delete()
         elif self.inverse:
-            getattr(item, self.inverse)._unrelate(instance, redis)
+            getattr(item, self.inverse)._unrelate(instance.id, redis)
 
     def manager(self, instance):
         return SingleRelationManager(instance, self.inverse, self.modelspec, self.name)
@@ -561,11 +535,31 @@ class SingleRelationManager:
     def _relate(self, obj_id, pipeline):
         pipeline.hset(self.instance.key(), self.name, obj_id)
 
+    def _unrelate(self, obj_id, redis):
+        redis.hdel(self.instance.key(), self.name, obj_id)
+
     def get(self):
         redis = self.instance.get_redis()
         value = debyte_string(redis.hget(self.instance.key(), self.name))
 
         return model_from_spec(self.modelspec).get(value)
+
+    def set(self, obj):
+        redis = self.instance.get_redis()
+        prev = getattr(self.instance, self.name).get()
+
+        if prev is not None and self.inverse:
+            getattr(prev.proxy, self.inverse)._unrelate(self.instance.id, redis)
+
+        if obj is None:
+            redis.hdel(self.instance.key(), self.name)
+            setattr(self.instance, self.name, None)
+            return
+
+        redis.hset(self.instance.key(), self.name, obj.id)
+
+        if self.inverse:
+            getattr(obj, self.inverse)._relate(self.instance.id, redis)
 
 
 class MultipleRelationManager:
@@ -589,13 +583,14 @@ class MultipleRelationManager:
 
         pipe.execute()
 
-    def add(self, value, self_obj):
+    def add(self, obj):
+        assert isinstance(obj, model_from_spec(self.modelspec))
         pipe = self.instance.get_redis().pipeline()
 
-        self._relate(value, pipe)
+        self._relate(obj.id, pipe)
 
         if self.inverse:
-            getattr(value, self.inverse)._relate(self_obj, pipe)
+            getattr(obj, self.inverse)._relate(self.instance.id, pipe)
 
         pipe.execute()
 
@@ -609,30 +604,14 @@ class MultipleRelationManager:
 
         return related
 
-    def remove(self, instance, redis):
-        key = self.key(instance)
-
-        getattr(self_obj.proxy, self.name).fill()
-        items = getattr(self_obj, self.name)
-
-        if self.on_delete == 'restrict' and len(items) > 0:
-            raise DeleteRestrictedError('attempt to delete with relations and restrict flag')
-
-        for item in items:
-            if self.on_delete == 'cascade':
-                item.delete()
-            elif self.inverse:
-                getattr(item.proxy, self.inverse)._unrelate(self_obj, redis)
-
-        redis.delete(key)
-
     def remove(self, value):
-        redis = type(self_obj).get_redis()
+        assert isinstance(value, model_from_spec(self.modelspec))
+        redis = self.instance.get_redis()
 
-        self._unrelate(value, redis)
+        self._unrelate(value.id, redis)
 
         if self.inverse:
-            getattr(value.proxy, self.inverse)._unrelate(self_obj, redis)
+            getattr(value, self.inverse)._unrelate(self.instance.id, redis)
 
     def count(self):
         raise NotImplementedError('count is not implemented yet for this subclass of MultipleRelation')
@@ -645,23 +624,18 @@ class MultipleRelationManager:
         current model through this field '''
         raise NotImplementedError()
 
-    def _clear(self, pipeline):
-        raise NotImplementedError()
-
     def _relate_all(self, pipeline):
         raise NotImplementedError()
 
     def clear(self):
         ''' Clears all the relations of this field to another model '''
-        pipe = self.instance.get_redis().pipeline()
-        self.clear(pipe)
-        pipe.execute()
+        redis = self.instance.get_redis()
+
+        for related in self.all():
+            self.remove(related)
 
 
 class SetRelationManager(MultipleRelationManager):
-
-    def _clear(self, pipeline):
-        pass
 
     def _relate(self, obj_id, redis):
         redis.sadd(self.relation_key, obj_id)
@@ -669,8 +643,8 @@ class SetRelationManager(MultipleRelationManager):
     def _relate_all(self, value, redis):
         redis.sadd(self.relation_key, *[r.id for r in value])
 
-    def _unrelate(self, obj, redis):
-        redis.srem(self.relation_key, obj.id)
+    def _unrelate(self, obj_id, redis):
+        redis.srem(self.relation_key, obj_id)
 
     def get_related_ids(self, redis):
         return redis.smembers(self.relation_key)
@@ -678,9 +652,8 @@ class SetRelationManager(MultipleRelationManager):
     def count(self):
         return self.instance.get_redis().scard(self.relation_key)
 
-    def q(self, instance):
-        cls = type(instance)
-        redis = cls.get_redis()
+    def q(self):
+        redis = self.instance.get_redis()
 
         return QuerySet(model_from_spec(self.modelspec), redis.sscan_iter(self.relation_key))
 
@@ -754,7 +727,7 @@ class MultipleRelation(Relation):
             if self.on_delete == 'cascade':
                 item.delete()
             elif self.on_delete == 'set_null' and self.inverse:
-                getattr(item, self.inverse)._unrelate(self.obj, redis)
+                getattr(item, self.inverse)._unrelate(instance.id, redis)
 
         redis.delete(key)
 

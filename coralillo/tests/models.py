@@ -92,6 +92,11 @@ class Person(Model):
     pets = fields.SetRelation(Pet, on_delete='cascade', inverse='owner')
 
 
+class UnattachedPerson(Model):
+    name = fields.Text()
+    pets = fields.SetRelation(Pet, on_delete='set_null', inverse='owner')
+
+
 # For many to many relations
 class Driver(Model):
     name = fields.Text()

@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from .models import Pet, Person, Driver, Car
+from .models import Pet, Person, UnattachedPerson, Driver, Car
 
 
 def test_relation(nrm):
@@ -48,10 +48,10 @@ def test_delete_preserves_related_no_cascade(nrm):
     doggo = Pet(name='doggo').save()
     catto = Pet(name='catto').save()
 
-    owner = Person(
+    owner = UnattachedPerson(
         name='John',
     ).save()
-    owner.pets([doggo, catto])
+    owner.pets.set([doggo, catto])
 
     assert doggo in owner.pets
     assert catto in owner.pets
@@ -69,61 +69,60 @@ def test_many_to_many_relationship(nrm):
     o2 = Car(name='o2').save()
 
     # test adding a relationship creates the inverse
-    u1.cars([o1, o2])
+    u1.cars.set([o1, o2])
     u1.save()
 
-    o1.drivers.fill()
-    o2.drivers.fill()
+    o1drivers = o1.drivers.all()
+    o2drivers = o2.drivers.all()
 
-    assert type(o1.drivers) == list
-    assert type(o2.drivers) == list
+    assert type(o1drivers) == list
+    assert type(o2drivers) == list
 
-    assert len(o1.drivers) == 1
-    assert len(o2.drivers) == 1
+    assert len(o1drivers) == 1
+    assert len(o2drivers) == 1
 
-    assert o1.drivers[0].name == 'u1'
-    assert o2.drivers[0].name == 'u1'
+    assert o1drivers[0].name == 'u1'
+    assert o2drivers[0].name == 'u1'
 
-    u2.cars([o2])
-    u2.save()
+    u2.cars.set([o2])
 
-    o1.drivers.fill()
-    o2.drivers.fill()
+    o1drivers = o1.drivers.all()
+    o2drivers = o2.drivers.all()
 
-    assert type(o1.drivers) == list
-    assert type(o2.drivers) == list
+    assert type(o1drivers) == list
+    assert type(o2drivers) == list
 
-    assert len(o1.drivers) == 1
-    assert len(o2.drivers) == 2
+    assert len(o1drivers) == 1
+    assert len(o2drivers) == 2
 
-    o2.drivers.sort(key=lambda x: x.name)
+    o2drivers.sort(key=lambda x: x.name)
 
-    assert o1.drivers[0].name == 'u1'
-    assert o2.drivers[0].name == 'u1'
-    assert o2.drivers[1].name == 'u2'
+    assert o1drivers[0].name == 'u1'
+    assert o2drivers[0].name == 'u1'
+    assert o2drivers[1].name == 'u2'
 
     # test deleting an object deletes the relationship in the related
 
     u1.delete()
 
-    o1.drivers.fill()
-    o2.drivers.fill()
+    o1drivers = o1.drivers.all()
+    o2drivers = o2.drivers.all()
 
-    assert type(o1.drivers) == list
-    assert type(o2.drivers) == list
+    assert type(o1drivers) == list
+    assert type(o2drivers) == list
 
-    assert len(o1.drivers) == 0
-    assert len(o2.drivers) == 1
+    assert len(o1drivers) == 0
+    assert len(o2drivers) == 1
 
 
 def test_querying_related(nrm):
     o1 = Car(name='o1').save()
     u1 = Driver(name='u1').save()
     u2 = Driver(name='u2').save()
-    u1.proxy.cars.set([o1])
+    u1.cars.set([o1])
 
-    assert u1 in o1.proxy.drivers
-    assert u2 not in o1.proxy.drivers
+    assert u1 in o1.drivers
+    assert u2 not in o1.drivers
 
 
 def test_can_filter_related(nrm):
@@ -137,18 +136,18 @@ def test_can_filter_related(nrm):
 
     p.pets.set(pets)
 
-    assert isinstance(p.proxy.pets.q().filter(name__startswith='pa'), Iterable)
+    assert isinstance(p.pets.q().filter(name__startswith='pa'), Iterable)
 
     res = list(map(
         lambda x: x.id,
-        p.proxy.pets.q().filter(name__startswith='b', name__endswith='d')
+        p.pets.q().filter(name__startswith='b', name__endswith='d')
     ))
 
     assert res == [pets[1].id]
 
     res = list(map(
         lambda x: x.id,
-        p.proxy.pets.q().filter(name__startswith='b').filter(name__endswith='d')
+        p.pets.q().filter(name__startswith='b').filter(name__endswith='d')
     ))
 
     assert res == [pets[1].id]
@@ -158,39 +157,40 @@ def test_foreign_key(nrm):
     owner = Person(name='John').save()
     pet = Pet(name='doggo').save()
 
-    pet.proxy.owner.set(owner)
-    owner.proxy.pets.fill()
+    pet.owner.set(owner)
+    ownerpets = owner.pets.all()
 
-    assert pet.owner is not None
-    assert pet.owner.id == owner.id
+    assert pet.owner.get() is not None
+    assert pet.owner.get().id == owner.id
 
-    assert type(owner.pets) == list
-    assert len(owner.pets) == 1
-    assert owner.pets[0].id == pet.id
+    ownerpets = owner.pets.all()
+
+    assert type(ownerpets) == list
+    assert len(ownerpets) == 1
+    assert ownerpets[0].id == pet.id
 
     pet.delete()
 
-    pet.proxy.owner.fill()
-    owner.proxy.pets.fill()
+    ownerpets = owner.pets.all()
 
-    assert type(owner.pets) == list
-    assert len(owner.pets) == 0
+    assert type(ownerpets) == list
+    assert len(ownerpets) == 0
 
 
 def test_foreign_key_inverse(nrm):
     pet = Pet(name='doggo').save()
     owner = Person(name='John').save()
-    owner.proxy.pets.set([pet])
+    owner.pets.set([pet])
 
-    pet.proxy.owner.fill()
-    owner.proxy.pets.fill()
+    petowner = pet.owner.get()
+    ownerpets = owner.pets.all()
 
-    assert pet.owner is not None
-    assert pet.owner.id == owner.id
+    assert petowner is not None
+    assert petowner.id == owner.id
 
-    assert type(owner.pets) == list
-    assert len(owner.pets) == 1
-    assert owner.pets[0].id == pet.id
+    assert type(ownerpets) == list
+    assert len(ownerpets) == 1
+    assert ownerpets[0].id == pet.id
 
 
 def test_delete_relation(nrm):
@@ -199,25 +199,42 @@ def test_delete_relation(nrm):
 
     d1 = Driver().save()
 
-    d1.proxy.cars.set([c1, c2])
+    d1.cars.set([c1, c2])
 
-    assert c1 in d1.proxy.cars
-    assert c2 in d1.proxy.cars
-    assert d1 in c1.proxy.drivers
-    assert d1 in c2.proxy.drivers
+    assert c1 in d1.cars
+    assert c2 in d1.cars
+    assert d1 in c1.drivers
+    assert d1 in c2.drivers
 
-    d1.proxy.cars.remove(c1)
+    d1.cars.remove(c1)
 
-    assert c1 not in d1.proxy.cars
-    assert c2 in d1.proxy.cars
-    assert d1 not in c1.proxy.drivers
-    assert d1 in c2.proxy.drivers
+    assert c1 not in d1.cars
+    assert c2 in d1.cars
+    assert d1 not in c1.drivers
+    assert d1 in c2.drivers
 
 
 def test_clear(nrm):
-    assert False, 'relate a bunch of objects to an object'
-    assert False, 'use clear to clear the relations'
-    assert False, 'check that all the objects still exist, they are just not related any more'
+    owner = Person(name='Juan').save()
+
+    pets = [
+        Pet(name='doggo').save(),
+        Pet(name='catto').save(),
+    ]
+
+    owner.pets.set(pets)
+
+    assert owner.pets.count() == 2
+
+    assert pets[0].owner.get() is not None
+    assert pets[1].owner.get() is not None
+
+    owner.pets.clear()
+
+    assert owner.pets.count() == 0
+
+    assert pets[0].owner.get() is None
+    assert pets[1].owner.get() is None
 
 
 def test_get_relation(nrm):
@@ -226,9 +243,9 @@ def test_get_relation(nrm):
 
     d1 = Driver().save()
 
-    d1.proxy.cars.set([c1, c2])
+    d1.cars.set([c1, c2])
 
-    cars = d1.proxy.cars.get()
+    cars = d1.cars.all()
 
     orig = sorted([c1, c2], key=lambda c: c.id)
     cars = sorted(cars, key=lambda c: c.id)
@@ -239,10 +256,10 @@ def test_get_relation(nrm):
 def test_get_foreignid_relation(nrm):
     pet = Pet().save()
     owner = Person().save()
-    owner.proxy.pets.add(pet)
+    owner.pets.add(pet)
 
-    assert pet.proxy.owner.get().id == owner.id
+    assert pet.owner.get().id == owner.id
 
-    owner.proxy.pets.remove(pet)
+    owner.pets.remove(pet)
 
-    assert pet.proxy.owner.get() is None
+    assert pet.owner.get() is None
