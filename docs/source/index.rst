@@ -45,7 +45,7 @@ Basic Usage
     mary = User.get_by('email', 'mary@example.com')
 
     # Retrieve all objects
-    users = User.get_all()
+    users = User.all()
 
 Learn More
 ----------
