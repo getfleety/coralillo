@@ -48,7 +48,7 @@ class Field:
         if instance is None:
             return self
 
-        if isinstance(self, MultipleRelation):
+        if isinstance(self, Relation):
             return self.manager(instance)
 
         return instance.__dict__[self.name]
@@ -115,7 +115,7 @@ class Field:
             if value is not None:
                 redis.hset(key, value, instance.id)
 
-    def delete(self, instance, redis):
+    def _delete(self, instance, redis):
         ''' Deletes this field's value from the databse. Should be implemented
         in special cases '''
         if self.index:
@@ -183,7 +183,7 @@ class TreeIndex(Field):
 
         redis.sadd(key + ':' + value, instance.id)
 
-    def delete(self, instance, redis):
+    def _delete(self, instance, redis):
         ''' Deletes this field's value from the databse. Should be implemented
         in special cases '''
         value = getattr(instance, self.name)
@@ -233,7 +233,8 @@ class Bool(Field):
     def validate(self, instance, value, redis):
         value = self.value_or_default(value)
 
-        if value is None: return None
+        if value is None:
+            return None
 
         if type(value) == bool:
             return value
@@ -362,7 +363,7 @@ class Location(Field):
         else:
             redis.zrem(key, instance.id)
 
-    def delete(self, instance, redis):
+    def _delete(self, instance, redis):
         key = self.key(instance)
 
         redis.zrem(key, instance.id)
@@ -400,7 +401,7 @@ class Location(Field):
             assert -90 < lat < 90
 
             return datamodel.Location(lon, lat)
-        except:
+        except ValueError:
             raise InvalidFieldError(self.name)
 
     def key(self, obj):
@@ -433,7 +434,7 @@ class Dict(Field):
         else:
             redis.delete(key)
 
-    def delete(self, instance, redis):
+    def _delete(self, instance, redis):
         key = self.key(instance)
 
         redis.delete(key)
@@ -458,38 +459,42 @@ class Dict(Field):
         return '{}:{}:dict_{}'.format(obj.cls_key(), obj.id, self.name)
 
 
+def model_from_spec(modelspec):
+    if type(modelspec) == str:
+        from . import Model
+
+        pieces = modelspec.split('.')
+
+        return getattr(import_module('.'.join(pieces[:-1])), pieces[-1])
+
+    return modelspec
+
+
 class Relation(Field):
 
     def __init__(self, model, *, private=False, on_delete=None, inverse=None):
         self.index = False
         self.modelspec = model
-        self.private   = private
+        self.private = private
         self.on_delete = on_delete
-        self.inverse   = inverse
-        self.fillable  = False
+        self.inverse = inverse
+        self.fillable = False
 
-    def model(self):
-        if type(self.modelspec) == str:
-            from . import Model
-
-            pieces = self.modelspec.split('.')
-
-            return getattr(import_module('.'.join(pieces[:-1])), pieces[-1])
-
-        return self.modelspec
+    def _delete(self, instance, redis):
+        raise NotImplementedError()
 
 
 class ForeignIdRelation(Relation):
 
     def __init__(self, model, *, private=False, on_delete=None, inverse=None):
         super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)
-        self.default   = None
+        self.default = None
 
     def validate(self, instance, value, redis):
         if value is None:
             return None
 
-        related_obj = self.model().get(value)
+        related_obj = model_from_spec(self.modelspec).get(value)
 
         if related_obj is None:
             raise InvalidFieldError(self.name)
@@ -498,11 +503,8 @@ class ForeignIdRelation(Relation):
 
     def save(self, instance, value, redis):
         if value is not None:
-            assert type(value) == self.model()
+            assert type(value) == model_from_spec(self.modelspec)
             redis.hset(instance.key(), self.name, value.id)
-
-    def relate(self, self_obj, obj, pipeline):
-        pipeline.hset(self_obj.key(), self.name, obj.id)
 
     def unrelate(self, self_obj, obj, redis):
         redis.hdel(self_obj.key(), self.name, obj.id)
@@ -526,15 +528,16 @@ class ForeignIdRelation(Relation):
         related = value
 
         if self.inverse:
-            getattr(related.proxy, self.inverse).relate(self_obj, redis)
+            getattr(related, self.inverse)._relate(self_obj, redis)
 
         setattr(self_obj, self.name, value)
 
-    def delete(self, instance, redis):
+    def _delete(self, instance, redis):
         getattr(instance.proxy, self.name).fill()
         item = getattr(instance, self.name)
 
-        if item is None: return
+        if item is None:
+            return
 
         if self.on_delete == 'restrict':
             raise DeleteRestrictedError('attempt to delete with relations and restrict flag')
@@ -551,38 +554,60 @@ class ForeignIdRelation(Relation):
         redis = type(self_obj).get_redis()
         value = debyte_string(redis.hget(self_obj.key(), self.name))
 
-        return self.model().get(value)
+        return model_from_spec(self.modelspec).get(value)
+
+    def manager(self, instance):
+        return SingleRelationManager(instance, self.inverse, self.modelspec, self.name)
 
 
-class RelatedManager:
+class SingleRelationManager:
 
-    def __init__(self, key, redis):
-        self.key = key
-        self.redis = redis
+    def __init__(self, instance, inverse, modelspec, name):
+        self.inverse = inverse
+        self.instance = instance
+        self.modelspec = modelspec
+        self.name = name
+
+    def _relate(self, obj_id, pipeline):
+        pipeline.hset(self.instance.key(), self.name, obj_id)
+
+
+class MultipleRelationManager:
+
+    def __init__(self, instance, relation_key, inverse, modelspec):
+        self.inverse = inverse
+        self.instance = instance
+        self.relation_key = relation_key
+        self.modelspec = modelspec
 
     def set(self, value):
-        pipe = self.redis.pipeline()
+        pipe = self.instance.get_redis().pipeline()
 
-        self._clear(pipe)
+        pipe.delete(self.relation_key)
 
-        for obj in value:
-            self._relate(obj, pipe)
+        self._relate_all(value, pipe)
+
+        for related in value:
+            if self.inverse:
+                getattr(related, self.inverse)._relate(self.instance.id, pipe)
 
         pipe.execute()
 
     def add(self, value, self_obj):
-        redis = type(self_obj).get_redis()
+        pipe = self.instance.get_redis().pipeline()
 
-        self.relate(value, redis)
+        self._relate(value, pipe)
 
         if self.inverse:
-            getattr(value.proxy, self.inverse).relate(self_obj, redis)
+            getattr(value, self.inverse)._relate(self_obj, pipe)
+
+        pipe.execute()
 
     def all(self, **kwargs):
         ''' Returns this relation '''
-        redis = type(self_obj).get_redis()
+        redis = self.instance.get_redis()
         related = list(map(
-            lambda id : self.model().get(debyte_string(id)),
+            lambda id: model_from_spec(self.modelspec).get(debyte_string(id)),
             self.get_related_ids(redis, **kwargs)
         ))
 
@@ -627,64 +652,60 @@ class RelatedManager:
     def _clear(self, pipeline):
         raise NotImplementedError()
 
+    def _relate_all(self, pipeline):
+        raise NotImplementedError()
+
     def clear(self):
         ''' Clears all the relations of this field to another model '''
-        pipe = self.redis.pipeline()
-        self.clear(pipeline)
+        pipe = self.instance.get_redis().pipeline()
+        self.clear(pipe)
         pipe.execute()
 
 
-class SetRelationManager(RelatedManager):
+class SetRelationManager(MultipleRelationManager):
 
     def _clear(self, pipeline):
         pass
 
-    def relate(self, obj, redis):
-        redis.sadd(self.key(instance), obj.id)
+    def _relate(self, obj_id, redis):
+        redis.sadd(self.relation_key, obj_id)
 
-    def relate_all(self, value, redis):
-        redis.sadd(self.key(instance), *[r.id for r in value])
+    def _relate_all(self, value, redis):
+        redis.sadd(self.relation_key, *[r.id for r in value])
 
-    def unrelate(self, obj, redis):
-        redis.srem(self.key(instance), obj.id)
+    def _unrelate(self, obj, redis):
+        redis.srem(self.relation_key, obj.id)
 
     def get_related_ids(self, redis):
-        key = self.key(instance)
-
-        return redis.smembers(key)
+        return redis.smembers(self.relation_key)
 
     def count(self):
-        key   = self.key(instance)
-        redis = type(self_obj).get_redis()
-
-        return redis.scard(key)
+        return self.instance.get_redis().scard(self.relation_key)
 
     def q(self, instance):
         cls = type(instance)
         redis = cls.get_redis()
 
-        return QuerySet(self.model(), redis.sscan_iter(self.key(instance)))
+        return QuerySet(model_from_spec(self.modelspec), redis.sscan_iter(self.relation_key))
 
     def __contains__(self, item):
-        if not isinstance(item, self.model()):
+        if not isinstance(item, model_from_spec(self.modelspec)):
             return False
 
-        redis = type(self_obj).get_redis()
-
-        return redis.sismember(self.key(instance), item.id)
+        return self.instance.get_redis().sismember(self.relation_key, item.id)
 
 
-class SortedSetRelationManager(RelatedManager):
+class SortedSetRelationManager(MultipleRelationManager):
 
-    def relate(self, obj, redis):
-        field = getattr(self.model(), self.sort_key) # the field in the foreign model
+    def _relate(self, obj, redis):
+        field = getattr(model_from_spec(self.modelspec), self.sort_key) # the field in the foreign model
 
         redis.zadd(self.key(instance), {
             field.prepare(getattr(obj, self.sort_key)): obj.id,
         })
 
     def relate_all(self, value, redis):
-        field = getattr(self.model(), self.sort_key) # the field in the foreign model
+        field = getattr(model_from_spec(self.modelspec), self.sort_key) # the field in the foreign model
 
         p = lambda v: int(field.prepare(getattr(v, self.sort_key)))
 
@@ -711,7 +732,7 @@ class SortedSetRelationManager(RelatedManager):
         return redis.zcard(key)
 
     def __contains__(self, item):
-        if not isinstance(item, self.model()):
+        if not isinstance(item, model_from_spec(self.modelspec)):
             return False
 
         redis = type(self_obj).get_redis()
@@ -733,7 +754,7 @@ class SetRelation(MultipleRelation):
         return '{}:{}:srel_{}'.format(instance.cls_key(), instance.id, self.name)
 
     def manager(self, instance):
-        return SetRelationManager(self.key(instance), instance.get_redis())
+        return SetRelationManager(instance, self.key(instance), self.inverse, self.modelspec)
 
 
 class SortedSetRelation(MultipleRelation):
@@ -748,4 +769,4 @@ class SortedSetRelation(MultipleRelation):
         return '{}:{}:zrel_{}'.format(instance.cls_key(), instance.id, self.name)
 
     def manager(self, instance):
-        return SortedSetRelationManager(self.key(instance), instance.get_redis())
+        return SortedSetRelationManager(instance, self.key(instance), self.inverse, self.modelspec)

@@ -4,25 +4,25 @@ from .models import Pet, Person, Driver, Car
 
 def test_relation(nrm):
     org = Car(
-        name      = 'Testing Inc',
+        name='Testing Inc',
     ).save()
 
     user = Driver(
-        name      = 'Sam',
+        name='Sam',
     ).save()
 
-    user.cars = [org]
+    user.cars.set([org])
     user.save()
 
     assert user.cars.count() == 1
 
-    assert user.cars[0].id == org.id
+    assert user.cars.all()[0].id == org.id
     assert nrm.redis.sismember('driver:{}:srel_cars'.format(user.id), org.id)
 
     same = Driver.get(user.id)
     same.cars.all()
 
-    assert same.cars[0].id == org.id
+    assert same.cars.all()[0].id == org.id
     assert same.to_json(include=['cars'])['cars'][0]['name'] == 'Testing Inc'
 
 
@@ -31,9 +31,9 @@ def test_delete_cascade(nrm):
     catto = Pet(name='catto').save()
 
     owner = Person(
-        name = 'John',
+        name='John',
     ).save()
-    owner.pets = [doggo, catto]
+    owner.pets.set([doggo, catto])
 
     assert doggo in owner.pets
     assert catto in owner.pets
@@ -49,9 +49,9 @@ def test_delete_preserves_related_no_cascade(nrm):
     catto = Pet(name='catto').save()
 
     owner = Person(
-        name = 'John',
+        name='John',
     ).save()
-    owner.pets = [doggo, catto]
+    owner.pets([doggo, catto])
 
     assert doggo in owner.pets
     assert catto in owner.pets
@@ -69,7 +69,7 @@ def test_many_to_many_relationship(nrm):
     o2 = Car(name='o2').save()
 
     # test adding a relationship creates the inverse
-    u1.cars = [o1, o2]
+    u1.cars([o1, o2])
     u1.save()
 
     o1.drivers.fill()
@@ -84,7 +84,7 @@ def test_many_to_many_relationship(nrm):
     assert o1.drivers[0].name == 'u1'
     assert o2.drivers[0].name == 'u1'
 
-    u2.cars = [o2]
+    u2.cars([o2])
     u2.save()
 
     o1.drivers.fill()
@@ -96,7 +96,7 @@ def test_many_to_many_relationship(nrm):
     assert len(o1.drivers) == 1
     assert len(o2.drivers) == 2
 
-    o2.drivers.sort(key=lambda x:x.name)
+    o2.drivers.sort(key=lambda x: x.name)
 
     assert o1.drivers[0].name == 'u1'
     assert o2.drivers[0].name == 'u1'
@@ -130,24 +130,24 @@ def test_can_filter_related(nrm):
     p = Person(name='Juan').save()
 
     pets = [
-        Pet(name='bc').save(), # 0
-        Pet(name='bd').save(), # 1
-        Pet(name='cd').save(), # 2
+        Pet(name='bc').save(),  # 0
+        Pet(name='bd').save(),  # 1
+        Pet(name='cd').save(),  # 2
     ]
 
-    p.proxy.pets.set(pets)
+    p.pets.set(pets)
 
     assert isinstance(p.proxy.pets.q().filter(name__startswith='pa'), Iterable)
 
     res = list(map(
-        lambda x:x.id,
+        lambda x: x.id,
         p.proxy.pets.q().filter(name__startswith='b', name__endswith='d')
     ))
 
     assert res == [pets[1].id]
 
     res = list(map(
-        lambda x:x.id,
+        lambda x: x.id,
         p.proxy.pets.q().filter(name__startswith='b').filter(name__endswith='d')
     ))
 
@@ -230,8 +230,8 @@ def test_get_relation(nrm):
 
     cars = d1.proxy.cars.get()
 
-    orig = sorted([c1, c2], key=lambda c:c.id)
-    cars = sorted(cars, key=lambda c:c.id)
+    orig = sorted([c1, c2], key=lambda c: c.id)
+    cars = sorted(cars, key=lambda c: c.id)
 
     assert orig == cars
 

@@ -1,5 +1,4 @@
-from copy import copy
-from coralillo.fields import Field, Relation, MultipleRelation, ForeignIdRelation
+from coralillo.fields import Field, MultipleRelation, Relation
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
 from coralillo.utils import to_pipeline, snake_case, parse_embed
@@ -20,7 +19,7 @@ def get_fields(cls):
 
 
 def get_no_relation_fields(cls):
-    return filter(lambda ft: not isinstance(ft[1], MultipleRelation), get_fields(cls))
+    return filter(lambda ft: not isinstance(ft[1], Relation), get_fields(cls))
 
 
 class Form:
@@ -29,7 +28,7 @@ class Form:
 
     def __init__(self):
         # This allows fast queries for set relations
-        self._old   = dict()
+        self._old = dict()
 
         for fieldname, field in get_fields(type(self)):
             setattr(
@@ -145,7 +144,7 @@ class Model(Form):
 
         pipe.hset(self.key(), 'id', self.id)
 
-        for fieldname, field in get_fields(type(self)):
+        for fieldname, field in get_no_relation_fields(type(self)):
             field.save(self, getattr(self, fieldname), pipe)
 
         pipe.sadd(type(self).members_key(), self.id)
@@ -284,7 +283,7 @@ class Model(Form):
         ''' Tries to retrieve an isinstance of this model from the database
         given a value for a defined index. Return None in case of failure '''
         redis = cls.get_redis()
-        key = cls.cls_key()+':index_'+field
+        key = cls.cls_key() + ':index_' + field
 
         id = redis.hget(key, value)
 
@@ -303,7 +302,7 @@ class Model(Form):
         return obj
 
     @classmethod
-    def get_all(cls):
+    def all(cls):
         ''' Gets all available instances of this model from the database '''
         redis = cls.get_redis()
 
@@ -328,8 +327,8 @@ class Model(Form):
         prefix = '{}:tree_{}'.format(cls.cls_key(), field)
         pieces = string.split(':')
 
-        ans =  redis.sunion(
-            prefix + ':' + ':'.join(pieces[0:i+1])
+        ans = redis.sunion(
+            prefix + ':' + ':'.join(pieces[0:i + 1])
             for i in range(len(pieces))
         )
 
@@ -339,7 +338,7 @@ class Model(Form):
                 debyte_string,
                 ans
             )
-        ), key=lambda x:x.id)
+        ), key=lambda x: x.id)
 
     @classmethod
     def cls_key(cls):
@@ -428,7 +427,7 @@ class Model(Form):
         redis = type(self).get_redis()
 
         for fieldname, field in get_fields(type(self)):
-            field.delete(self, redis)
+            field._delete(self, redis)
 
         redis.delete(self.key())
         redis.srem(type(self).members_key(), self.id)
