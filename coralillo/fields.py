@@ -484,7 +484,11 @@ class Relation(Field):
         raise NotImplementedError()
 
 
-class ForeignIdRelation(Relation):
+class SingleRelation(Relation):
+    pass
+
+
+class ForeignIdRelation(SingleRelation):
 
     def __init__(self, model, *, private=False, on_delete='set_null', inverse=None):
         super().__init__(model, private=private, on_delete=on_delete, inverse=inverse)

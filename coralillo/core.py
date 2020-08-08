@@ -1,4 +1,4 @@
-from coralillo.fields import Field, MultipleRelation, Relation
+from coralillo.fields import Field, Relation, MultipleRelation, SingleRelation
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
 from coralillo.utils import to_pipeline, snake_case, parse_embed
@@ -386,7 +386,7 @@ class Model(Form):
         def fieldfilter(fieldtuple):
             return \
                 not fieldtuple[1].private and \
-                not isinstance(fieldtuple[1], MultipleRelation) and (
+                not isinstance(fieldtuple[1], Relation) and (
                     include is None or fieldtuple[0] in include or '*' in include
                 )
 
@@ -402,11 +402,16 @@ class Model(Form):
             if not hasattr(type(self), relation_name):
                 continue
 
-            if not isinstance(getattr(type(self), relation_name), MultipleRelation):
+            if not isinstance(getattr(type(self), relation_name), Relation):
                 continue
 
             relation = getattr(self, relation_name)
-            json[relation_name] = list(map(lambda o: o.to_json(include=subfields), relation.all()))
+
+            if isinstance(getattr(type(self), relation_name), MultipleRelation):
+                json[relation_name] = list(map(lambda o: o.to_json(include=subfields), relation.all()))
+            elif isinstance(getattr(type(self), relation_name), SingleRelation):
+                related = relation.get()
+                json[relation_name] = related.to_json(include=subfields) if related is not None else None
 
         return json
 

@@ -3,8 +3,8 @@ from .models import Office, Employee, A, B, C
 
 def test_include_simplest(nrm):
     office = Office(
-        name = 'Fleety',
-        address = 'Springfield 132',
+        name='Fleety',
+        address='Springfield 132',
     ).save()
 
     assert office.to_json() == {
@@ -28,12 +28,12 @@ def test_include_simplest(nrm):
 
 def test_incude(nrm):
     office = Office(
-        name = 'Fleety',
-        address = 'Springfield 132',
+        name='Fleety',
+        address='Springfield 132',
     ).save()
     employee = Employee(
-        name = 'Juan',
-        last_name = 'Alduci',
+        name='Juan',
+        last_name='Alduci',
     ).save()
     office.employees.set([employee])
 
@@ -55,12 +55,12 @@ def test_incude(nrm):
 
 def test_include_foreignid_relation(nrm):
     office = Office(
-        name = 'Fleety',
-        address = 'Springfield 132',
+        name='Fleety',
+        address='Springfield 132',
     ).save()
     employee = Employee(
-        name = 'Juan',
-        last_name = 'Alduci',
+        name='Juan',
+        last_name='Alduci',
     ).save()
     office.employees.set([employee])
 
@@ -101,10 +101,10 @@ def test_include_three_levels():
     a = A(attr='z').save()
 
     b = B(attr='z').save()
-    b.a = a
+    b.a.set(a)
 
     c = C(attr='z').save()
-    c.b = b
+    c.b.set(b)
 
     assert a.to_json(include=['attr', 'bs.cs']) == {
         'attr': 'z',
@@ -131,10 +131,10 @@ def test_include_asterisc():
     a = A(attr='z').save()
 
     b = B(attr='z').save()
-    b.a = a
+    b.a.set(a)
 
     c = C(attr='z').save()
-    c.b = b
+    c.b.set(b)
 
     assert a.to_json(include=['*', 'bs.cs.attr']) == {
         '_type': 'a',
