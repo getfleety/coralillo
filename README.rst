@@ -21,21 +21,37 @@ Installation
 
    $ pip install coralillo
 
-Testing
--------
+Usage
+-----
 
-Since this project uses pytest is as easy as:
+.. code:: python
 
-.. code-block:: bash
+    from coralillo import Engine, Model, fields
 
-   $ pytest
+    # Create the engine
+    eng = Engine()
 
-Deploy
-------
+    # Declare your models
+    class User(Model):
+        name      = fields.Text()
+        last_name = fields.Text()
+        email     = fields.Text(
+            index=True,
+            regex='^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$',
+        )
 
-Make a tag with the corresponding release number, then:
+        class Meta:
+            engine = eng
 
-.. code-block:: bash
+    # Persist objects to database
+    john = User(
+        name='John',
+        last_name='Doe',
+        email='john@example.com',
+    ).save()
 
-   $ make clean
-   $ make release
+    # Query by index
+    mary = User.get_by('email', 'mary@example.com')
+
+    # Retrieve all objects
+    users = User.all()
