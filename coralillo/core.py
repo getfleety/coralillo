@@ -1,7 +1,7 @@
 from coralillo.fields import Field, Relation, MultipleRelation, SingleRelation
 from coralillo.datamodel import debyte_hash, debyte_string
 from coralillo.errors import ValidationErrors, UnboundModelError, BadField, ModelNotFoundError
-from coralillo.utils import to_pipeline, snake_case, parse_embed
+from coralillo.utils import snake_case, parse_embed
 from coralillo.auth import PermissionHolder
 from coralillo.queryset import QuerySet
 from coralillo import Engine
@@ -140,7 +140,7 @@ class Model(Form):
         ''' Persists this object to the database. Each field knows how to store
         itself so we don't have to worry about it '''
         redis = type(self).get_redis()
-        pipe = to_pipeline(redis)
+        pipe = redis.pipeline()
 
         pipe.hset(self.key(), 'id', self.id)
 

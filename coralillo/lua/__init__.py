@@ -2,11 +2,12 @@ import os
 
 SCRIPT_PATH = os.path.dirname(__file__)
 
+
 class Lua:
 
     def __init__(self, redis):
         self.redis = redis
-        scripts = filter(lambda s:s.endswith('.lua'), os.listdir(SCRIPT_PATH))
+        scripts = filter(lambda s: s.endswith('.lua'), os.listdir(SCRIPT_PATH))
 
         for scriptname in scripts:
             with open(os.path.join(SCRIPT_PATH, scriptname)) as script:

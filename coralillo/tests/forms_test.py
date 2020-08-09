@@ -1,5 +1,6 @@
 from .models import ShipForm
 
+
 def test_init_form():
     obj = ShipForm()
 

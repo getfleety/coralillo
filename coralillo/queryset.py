@@ -77,7 +77,7 @@ class QuerySet:
                     fieldname,
                 ))
 
-            if not query_func in FILTERS:
+            if query_func not in FILTERS:
                 raise AttributeError('Filter {} does not exist'.format(query_func))
 
             self.filters.append(self.make_filter(fieldname, query_func, value))

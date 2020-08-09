@@ -1,7 +1,5 @@
 # Borrowed from django.contrib.auth.hashes v1.11
-import base64
 import binascii
-import functools
 import hmac
 import hashlib
 import importlib
@@ -14,16 +12,20 @@ from collections import OrderedDict
 UNUSABLE_PASSWORD_PREFIX = '!'  # This will never be a valid encoded hash
 UNUSABLE_PASSWORD_SUFFIX_LENGTH = 40  # number of random chars to add after UNUSABLE_PASSWORD_PREFIX
 
-_ = lambda x:x
+
+def _(x):
+    return x
+
 
 try:
     random = random.SystemRandom()
     using_sysrandom = True
 except NotImplementedError:
-    import warnings
+    import warnings  # noqa
     warnings.warn('A secure pseudo-random number generator is not available '
                   'on your system. Falling back to Mersenne Twister.')
     using_sysrandom = False
+
 
 def force_text(s, encoding='utf-8', strings_only=False, errors='strict'):
     """
@@ -34,15 +36,14 @@ def force_text(s, encoding='utf-8', strings_only=False, errors='strict'):
     # Handle the common case first for performance reasons.
     if issubclass(type(s), str):
         return s
-    if strings_only and is_protected_type(s):
+    if strings_only:
         return s
-    try:
-        if isinstance(s, bytes):
-            s = str(s, encoding, errors)
-        else:
-            s = str(s)
-    except UnicodeDecodeError as e:
-        raise DjangoUnicodeDecodeError(s, *e.args)
+
+    if isinstance(s, bytes):
+        s = str(s, encoding, errors)
+    else:
+        s = str(s)
+
     return s
 
 
@@ -58,7 +59,7 @@ def force_bytes(s, encoding='utf-8', strings_only=False, errors='strict'):
             return s
         else:
             return s.decode('utf-8', errors).encode(encoding, errors)
-    if strings_only and is_protected_type(s):
+    if strings_only:
         return s
     if isinstance(s, memoryview):
         return bytes(s)
@@ -90,7 +91,7 @@ def get_random_string(length=12,
         # is better than absolute predictability.
         random.seed(
             hashlib.sha256(
-                ('%s%s%s' % (random.getstate(), time.time(), settings.SECRET_KEY)).encode()
+                ('%s%s' % (random.getstate(), time.time())).encode()
             ).digest()
         )
         return ''.join(random.choice(allowed_chars) for i in range(length))
@@ -298,5 +299,6 @@ class BCryptPasswordHasher(BCryptSHA256PasswordHasher):
     """
     algorithm = "bcrypt"
     digest = None
+
 
 bCryptPasswordHasher = BCryptPasswordHasher()

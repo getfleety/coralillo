@@ -14,7 +14,7 @@ class Engine:
             url = kwargs.pop('url')
 
             self.redis = redis.Redis.from_url(url, **kwargs)
-        except:
+        except KeyError:
             self.redis = redis.Redis(**kwargs)
 
         self.id_function = id_function
@@ -22,4 +22,4 @@ class Engine:
         self.lua = Lua(self.redis)
 
 
-from coralillo.core import Form, Model, BoundedModel
+from coralillo.core import Form, Model, BoundedModel  # noqa

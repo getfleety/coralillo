@@ -1,8 +1,7 @@
 from . import datamodel
-from .datamodel import debyte_string, debyte_hash
+from .datamodel import debyte_string
 from .errors import MissingFieldError, InvalidFieldError, ReservedFieldError, NotUniqueFieldError, DeleteRestrictedError
 from .hashing import make_password, is_hashed
-from .utils import to_pipeline
 from coralillo.queryset import QuerySet
 from importlib import import_module
 import datetime
@@ -70,7 +69,7 @@ class Field:
     def validate_required(self, value):
         ''' Validates the given value agains this field's 'required' property
         '''
-        if self.required and (value is None or value==''):
+        if self.required and (value is None or value == ''):
             raise MissingFieldError(self.name)
 
     def init(self, value):
@@ -89,7 +88,8 @@ class Field:
 
     def prepare(self, value):
         ''' Prepare this field's value to insert in database '''
-        if value is None: return None
+        if value is None:
+            return None
 
         return str(value)
 
@@ -200,7 +200,8 @@ class Hash(Text):
         ''' hash passwords given in the constructor '''
         value = self.value_or_default(value)
 
-        if value is None: return None
+        if value is None:
+            return None
 
         if is_hashed(value):
             return value
@@ -461,8 +462,6 @@ class Dict(Field):
 
 def model_from_spec(modelspec):
     if type(modelspec) == str:
-        from . import Model
-
         pieces = modelspec.split('.')
 
         return getattr(import_module('.'.join(pieces[:-1])), pieces[-1])
@@ -633,8 +632,6 @@ class MultipleRelationManager:
 
     def clear(self):
         ''' Clears all the relations of this field to another model '''
-        redis = self.instance.get_redis()
-
         for related in self.all():
             self.remove(related)
 
@@ -670,47 +667,46 @@ class SetRelationManager(MultipleRelationManager):
 
 class SortedSetRelationManager(MultipleRelationManager):
 
-    def _relate(self, obj, redis):
-        field = getattr(model_from_spec(self.modelspec), self.sort_key) # the field in the foreign model
+    def __init__(self, instance, relation_key, inverse, modelspec, sort_key):
+        super().__init__(instance, relation_key, inverse, modelspec)
+        self.sort_key = sort_key
 
-        redis.zadd(self.key(instance), {
+    def _relate(self, obj, redis):
+        field = getattr(model_from_spec(self.modelspec), self.sort_key)  # the field in the foreign model
+
+        redis.zadd(self.relation_key, {
             field.prepare(getattr(obj, self.sort_key)): obj.id,
         })
 
-    def relate_all(self, value, redis):
-        field = getattr(model_from_spec(self.modelspec), self.sort_key) # the field in the foreign model
+    def _relate_all(self, value, redis):
+        field = getattr(model_from_spec(self.modelspec), self.sort_key)  # the field in the foreign model
 
-        p = lambda v: int(field.prepare(getattr(v, self.sort_key)))
-
-        redis.zadd(self.key(instance), {
-            p(r): r.id
+        redis.zadd(self.relation_key, {
+            int(field.prepare(getattr(r, self.sort_key))): r.id
             for r in value
         })
 
     def _unrelate(self, obj, redis):
-        redis.zrem(self.key(instance), obj.id)
+        redis.zrem(self.relation_key, obj.id)
 
     def get_related_ids(self, redis, *, score=None):
-        key = self.key(instance)
-
         if score:
-            return redis.zrangebyscore(key, *score)
+            return redis.zrangebyscore(self.relation_key, *score)
 
-        return redis.zrange(key, 0, -1)
+        return redis.zrange(self.relation_key, 0, -1)
 
     def count(self):
-        key   = self.key(instance)
-        redis = type(self_obj).get_redis()
+        redis = self.instance.get_redis()
 
-        return redis.zcard(key)
+        return redis.zcard(self.relation_key)
 
     def __contains__(self, item):
         if not isinstance(item, model_from_spec(self.modelspec)):
             return False
 
-        redis = type(self_obj).get_redis()
+        redis = self.instance.get_redis()
 
-        return redis.zscore(self.key(instance), item.id) is not None
+        return redis.zscore(self.relation_key, item.id) is not None
 
 
 class MultipleRelation(Relation):
@@ -758,4 +754,4 @@ class SortedSetRelation(MultipleRelation):
         return '{}:{}:zrel_{}'.format(instance.cls_key(), instance.id, self.name)
 
     def manager(self, instance):
-        return SortedSetRelationManager(instance, self.key(instance), self.inverse, self.modelspec)
+        return SortedSetRelationManager(instance, self.key(instance), self.inverse, self.modelspec, self.sort_key)

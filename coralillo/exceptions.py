@@ -1,1 +1,2 @@
-class NotIndexError(Exception): pass
+class NotIndexError(Exception):
+    pass

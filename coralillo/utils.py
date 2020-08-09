@@ -1,14 +1,5 @@
-from redis.client import Pipeline
 import re
 
-def to_pipeline(redis):
-    ''' If the argument is a redis connection this function makes a redis
-    pipeline from it. Otherwise it returns the object passed, so it ensures
-    it is a pipeline '''
-    if isinstance(redis, Pipeline):
-        return redis
-
-    return redis.pipeline()
 
 # from https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
 def snake_case(string):
@@ -18,11 +9,13 @@ def snake_case(string):
 
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
+
 def camelCase(string):
     ''' Takes a string that represents the redis key version of a model name
     and returns its camel case version. It is used for key-to-model
     conversion. '''
-    return ''.join(s[0].upper()+s[1:] for s in string.split('_'))
+    return ''.join(s[0].upper() + s[1:] for s in string.split('_'))
+
 
 def parse_embed(embed_array):
     if not embed_array:
@@ -45,4 +38,4 @@ def parse_embed(embed_array):
     return sorted(map(
         lambda item: list(item),
         fields.items()
-    ), key=lambda x:x[0])
+    ), key=lambda x: x[0])

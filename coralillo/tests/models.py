@@ -137,6 +137,18 @@ class C(Model):
     b = fields.ForeignIdRelation(A, inverse='cs')
 
 
+# For sorted set tests
+class Admin(Model):
+    name = fields.Text()
+    logs = fields.SortedSetRelation('coralillo.tests.models.Log', sort_key='date', inverse='admin')
+
+
+class Log(Model):
+    data = fields.Text()
+    date = fields.Datetime()
+    admin = fields.ForeignIdRelation(Admin, inverse='logs')
+
+
 def bound_models(eng):
     for name, cls in inspect.getmembers(sys.modules[__name__]):
         if inspect.isclass(cls):

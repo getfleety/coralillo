@@ -1,5 +1,7 @@
 from collections.abc import Iterable
-from .models import Pet, Person, UnattachedPerson, Driver, Car
+from datetime import datetime
+
+from .models import Pet, Person, UnattachedPerson, Driver, Car, Admin, Log
 
 
 def test_relation(nrm):
@@ -263,3 +265,29 @@ def test_get_foreignid_relation(nrm):
     owner.pets.remove(pet)
 
     assert pet.owner.get() is None
+
+
+def test_sorted_set_relation(nrm):
+    owner = Admin(name='Juan').save()
+
+    logs = [
+        Log(date=datetime(2020, 1, 1), data='1').save(),
+        Log(date=datetime(2020, 1, 1), data='1').save(),
+        Log(date=datetime(2020, 1, 1), data='1').save(),
+    ]
+
+    owner.logs.set(logs[:-1])
+    owner.logs.add(logs[-1])
+
+    assert owner.logs.count() == 3
+
+    for old, new in zip(logs, owner.logs.all()):
+        assert old.id == new.id
+
+    for log in logs:
+        assert log in owner.logs
+
+    owner.delete()
+
+    for log in logs:
+        assert log.owner.get() is None
