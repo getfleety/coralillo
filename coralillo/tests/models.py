@@ -140,13 +140,13 @@ class C(Model):
 # For sorted set tests
 class Admin(Model):
     name = fields.Text()
-    logs = fields.SortedSetRelation('coralillo.tests.models.Log', sort_key='date', inverse='admin')
+    logs = fields.SortedSetRelation('coralillo.tests.models.Log', sort_key='date', inverse='owner')
 
 
 class Log(Model):
     data = fields.Text()
     date = fields.Datetime()
-    admin = fields.ForeignIdRelation(Admin, inverse='logs')
+    owner = fields.ForeignIdRelation(Admin, inverse='logs')
 
 
 def bound_models(eng):
